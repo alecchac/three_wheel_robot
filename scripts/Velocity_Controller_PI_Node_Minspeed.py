@@ -125,7 +125,7 @@ class Velocity_Controller_PI(object):
 		
 		self.last_time = time.time()
 		
-	def update_velocities(self):
+	def update_velocities(self,minVel):
 		#update errors
 		self.errorX=self.setX-self.currentX
 		self.errorY=self.setY-self.currentY
@@ -196,6 +196,7 @@ class Velocity_Controller_PI(object):
 			v_theta=-self.saturation_a
 		else:
 			self.satT=False
+		
 				
 			
 		return [v_x,v_y,v_theta]
