@@ -1,0 +1,6 @@
+<launch>
+<node name="User" pkg="three_wheel_robot" type="User_Node.py" />
+<node name="Three_Wheel_Sim" pkg="three_wheel_robot" type="Three_Wheel_Sim_Node.py" />
+<node name="Controller" pkg="three_wheel_robot" type="Velocity_Controller_PI_Node.py" />
+</launch>
+  
