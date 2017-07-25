@@ -10,7 +10,8 @@ def main():
 	rospy.init_node('Controller',anonymous=True)
 	#initialize controller
 	#(self,saturation_linear,saturation_angular,Kc_linear,Ti_linear,Kc_angular,Ti_angular)
-	bobControl=Velocity_Controller_PI(5,1,.5,15,.5,50)
+	bobControl=Velocity_Controller_PI(5,1,.05,15,.5,50)
+	#initialize listeners
 	bobWay=waypoint_listener()
 	bobInfo=robot_info_listener()
 	rospy.Subscriber('goal_pos',waypoints,bobWay.callback)
@@ -18,7 +19,7 @@ def main():
 	pub=rospy.Publisher('cmd_vel',robot_info,queue_size=10)
 	bobPubInfo=robot_info()
 	
-	distance_tolerance=1
+	distance_tolerance=2.1
 	angle_tolerance=1
 	
 	while (not rospy.is_shutdown()) :
@@ -27,7 +28,7 @@ def main():
 				bobControl.reset_Iterms()
 				while getDistance(bobWay.x[i],bobWay.y[i],bobInfo.x,bobInfo.y)>distance_tolerance or abs(bobWay.theta[i]-bobInfo.theta)>angle_tolerance:
 					bobControl.update_current_positions(bobWay.x[i],bobWay.y[i],bobWay.theta[i],bobInfo.x,bobInfo.y,bobInfo.theta)
-					vels=bobControl.update_velocities()
+					vels=bobControl.update_velocities(bobWay.min_velocity[i])
 					bobPubInfo.v_x=vels[0]
 					bobPubInfo.v_y=vels[1]
 					bobPubInfo.omega=vels[2]				
@@ -49,13 +50,14 @@ class waypoint_listener(object):
 		self.x=()
 		self.y=()
 		self.theta=()
-
+		self.min_velocity=()
 		
 
 	def callback(self,data):
 		self.x=data.x
 		self.y=data.y
 		self.theta=data.theta
+		self.min_velocity=data.min_velocity
 
 class robot_info_listener(object):
 	""" robot info listener"""
@@ -197,8 +199,18 @@ class Velocity_Controller_PI(object):
 		else:
 			self.satT=False
 		
-				
-			
+		mag=math.sqrt((v_x**2)+(v_y**2))
+		multiplier=minVel/mag
+		oldang=math.atan2(v_y,v_x)
+
+		if mag<minVel:
+			v_x*=multiplier
+			v_y*=multiplier
+			print "mag: " + str(mag)
+			print "mult: " + str(multiplier)
+			print "min_vel: " + str( minVel)
+			print "same angle?: " + str(math.atan2(v_y,v_x)==oldang)
+			print "current mag: " + str(math.sqrt((v_x**2)+(v_y**2)))
 		return [v_x,v_y,v_theta]
 		
 	

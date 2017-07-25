@@ -12,7 +12,7 @@ def main():
     myWaypoints.x=[90,80,10]
     myWaypoints.y=[90,10,90]
     myWaypoints.theta=[3.14,2,5]
-    myWaypoints.min_velocity=[2,2,2]
+    myWaypoints.min_velocity=[3,3,3]
 
     while not rospy.is_shutdown():
         pub.publish(myWaypoints)
