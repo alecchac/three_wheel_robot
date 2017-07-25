@@ -2,7 +2,6 @@
 import rospy
 from three_wheel_robot.msg import waypoints
 
-#TODO: Check to see if all lists have same lengths
 
 def main():
     myWaypoints = waypoints()
@@ -15,9 +14,12 @@ def main():
     myWaypoints.min_velocity=[3,3,3]
 
     while not rospy.is_shutdown():
-        pub.publish(myWaypoints)
-        print(myWaypoints.theta)
-        rate.sleep()
+        if len(myWaypoints.x)==len(myWaypoints.y) and len(myWaypoints.x)==len(myWaypoints.theta) and len(myWaypoints.x)==len(myWaypoints.min_velocity):
+            pub.publish(myWaypoints)
+            print(myWaypoints)
+            rate.sleep()
+        else:
+            rospy.loginfo("ERROR: Arrays are different sizes, will not publish")
 
 if __name__ == '__main__':
     try:

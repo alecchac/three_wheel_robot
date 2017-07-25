@@ -11,28 +11,38 @@ def main():
 	#initialize controller
 	#(self,saturation_linear,saturation_angular,Kc_linear,Ti_linear,Kc_angular,Ti_angular)
 	bobControl=Velocity_Controller_PI(5,1,.05,15,.5,50)
-	#initialize listeners
+	#initialize listener classes
 	bobWay=waypoint_listener()
 	bobInfo=robot_info_listener()
+	#init subscribers
 	rospy.Subscriber('goal_pos',waypoints,bobWay.callback)
 	rospy.Subscriber('current_robot_info',robot_info,bobInfo.callback)
+	#init publishers and publish message
 	pub=rospy.Publisher('cmd_vel',robot_info,queue_size=10)
 	bobPubInfo=robot_info()
-	
+	#set tolerance for goal pose 
 	distance_tolerance=2.1
 	angle_tolerance=1
 	
 	while (not rospy.is_shutdown()) :
+		#checks if waypoint message is not empty
 		if len(bobWay.x)>0:
+			#loops through all waypoints
 			for i in range(len(bobWay.x)):
+				#resets Integrator sums
 				bobControl.reset_Iterms()
+				#checks if robot within the distance and angle tolerances
 				while getDistance(bobWay.x[i],bobWay.y[i],bobInfo.x,bobInfo.y)>distance_tolerance or abs(bobWay.theta[i]-bobInfo.theta)>angle_tolerance:
+					#updates the current goal pose and the current pose of the robot for the controller class to use
 					bobControl.update_current_positions(bobWay.x[i],bobWay.y[i],bobWay.theta[i],bobInfo.x,bobInfo.y,bobInfo.theta)
+					#calculates the velocities that the robot needs to go (need to specify minimum velocity in the function)
 					vels=bobControl.update_velocities(bobWay.min_velocity[i])
+					#publish velocities to topic cmd_vel
 					bobPubInfo.v_x=vels[0]
 					bobPubInfo.v_y=vels[1]
 					bobPubInfo.omega=vels[2]				
 					pub.publish(bobPubInfo)
+			#once done set velocities to zero and publish velocities
 			bobPubInfo.v_x=0
 			bobPubInfo.v_y=0
 			bobPubInfo.omega=0				
@@ -133,21 +143,16 @@ class Velocity_Controller_PI(object):
 		self.errorY=self.setY-self.currentY
 		self.errorTheta=self.setTheta-self.currentTheta
 
-
-		
 		#Proportional Contribution
 		v_xP=self.errorX*self.Kc_l
 		v_yP=self.errorY*self.Kc_l
 		v_thetaP=self.errorTheta*self.Kc_a
 
-		
-		
 		#calculate time from last function run
 		delta_t=time.time()-self.last_time
 		#resets delta_t if function has not been run for a while
 		if delta_t>2:
 			delta_t=0
-		
 		
 		#Integral Contribution 
 		#Sums up the error term with the delta t to remove steady state error
@@ -162,7 +167,6 @@ class Velocity_Controller_PI(object):
 		#Set last time
 		self.last_time=time.time()
 	
-			
 		#Add both contributions
 		v_x=v_xP+self.IX
 		v_y=v_yP+self.IY
@@ -171,7 +175,7 @@ class Velocity_Controller_PI(object):
 		#motor saturtaion (sets max speed) 
 		#x saturation
 		if v_x>self.saturation_l:
-			#if motor is saturated, apply windup protection
+			#if motor is saturated, apply windup protection and stops integrating
 			self.satX=True
 			v_x=self.saturation_l
 		elif v_x<-self.saturation_l:
@@ -199,18 +203,15 @@ class Velocity_Controller_PI(object):
 		else:
 			self.satT=False
 		
+		#controls minimum speed: if velocities are too low, increase to the min velocity
 		mag=math.sqrt((v_x**2)+(v_y**2))
 		multiplier=minVel/mag
 		oldang=math.atan2(v_y,v_x)
-
 		if mag<minVel:
 			v_x*=multiplier
 			v_y*=multiplier
-			print "mag: " + str(mag)
-			print "mult: " + str(multiplier)
-			print "min_vel: " + str( minVel)
-			print "same angle?: " + str(math.atan2(v_y,v_x)==oldang)
-			print "current mag: " + str(math.sqrt((v_x**2)+(v_y**2)))
+
+		#return calculated velocities
 		return [v_x,v_y,v_theta]
 		
 	

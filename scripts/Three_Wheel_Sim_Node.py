@@ -7,24 +7,28 @@ from three_wheel_robot.msg import robot_info
 
 def main():
 	#init node
-	rospy.init_node('Three_Wheel_Sim',anonymous=True)
-	#initialize bob robot
+	rospy.init_node('Three_Wheel_Sim', anonymous=True)
+	#initialize bob robot (x,y,theta(radians))
 	bob = robot(10,10,0)
 	bob.init_plot()
-	vels = robot_info()
+	#initialize messages
 	pubInfo = robot_info()
+	#initialize listener class
 	control_vels = cmd_vel_listener()
-	pub=rospy.Publisher('current_robot_info',robot_info,queue_size=10)
+	#init publisher and subscriber
+	pub=rospy.Publisher('current_robot_info', robot_info, queue_size=10)
 	rospy.Subscriber('cmd_vel',robot_info,control_vels.callback)
 
 	while not rospy.is_shutdown():
-		vels.v_x=control_vels.v_x
-		vels.v_y=control_vels.v_y
-		vels.omega=control_vels.omega
-		bob.update_velocities(vels.v_x,vels.v_y,vels.omega)
+		#take velocities from controller and update velocites in robot class
+		bob.update_velocities(control_vels.v_x,control_vels.v_y,control_vels.omega)
+		#clears the plot
 		bob.clear_robot()
+		#calculates new position from new velocites and current position
 		bob.update_pos()
+		#displays on plot
 		bob.display_robot()
+		#publish current robot pose and velocities to the robot_info topic
 		pubInfo.x=bob.x
 		pubInfo.y=bob.y
 		pubInfo.theta=bob.theta
@@ -33,6 +37,7 @@ def main():
 		pubInfo.omega=bob.omega
 		pub.publish(pubInfo)
 		print pubInfo
+		#allows plot to plot continuously
 		plt.pause(.001)
 	rospy.spin()
 
