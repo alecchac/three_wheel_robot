@@ -16,7 +16,7 @@ def main():
 	#initialize listener class
 	control_vels = cmd_vel_listener()
 	#init publisher and subscriber
-	pub=rospy.Publisher('current_robot_info', robot_info, queue_size=10)
+	pub=rospy.Publisher('current_robot_info', robot_info, queue_size=1)
 	rospy.Subscriber('cmd_vel',robot_info,control_vels.callback)
 
 	while not rospy.is_shutdown():
@@ -43,6 +43,7 @@ def main():
 
 class cmd_vel_listener(object):
 	""" cmd_vel listener"""
+	
 	def __init__(self):
 		self.x=0.0
 		self.y=0.0

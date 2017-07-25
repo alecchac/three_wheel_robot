@@ -5,7 +5,7 @@ from three_wheel_robot.msg import waypoints
 
 def main():
     myWaypoints = waypoints()
-    pub = rospy.Publisher('goal_pos',waypoints,queue_size=10)
+    pub = rospy.Publisher('goal_pos',waypoints,queue_size=1)
     rospy.init_node('User',anonymous=True)
     rate=rospy.Rate(1)
     myWaypoints.x=[90,80,10]
@@ -20,6 +20,7 @@ def main():
             rate.sleep()
         else:
             rospy.loginfo("ERROR: Arrays are different sizes, will not publish")
+            break;
 
 if __name__ == '__main__':
     try:

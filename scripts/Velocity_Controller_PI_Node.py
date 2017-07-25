@@ -18,13 +18,14 @@ def main():
 	rospy.Subscriber('goal_pos',waypoints,bobWay.callback)
 	rospy.Subscriber('current_robot_info',robot_info,bobInfo.callback)
 	#init publishers and publish message
-	pub=rospy.Publisher('cmd_vel',robot_info,queue_size=10)
+	pub=rospy.Publisher('cmd_vel',robot_info,queue_size=1)
 	bobPubInfo=robot_info()
 	#set tolerance for goal pose 
 	distance_tolerance=2.1
 	angle_tolerance=1
 	
 	while (not rospy.is_shutdown()) :
+		last_time=time.time()
 		#checks if waypoint message is not empty
 		if len(bobWay.x)>0:
 			#loops through all waypoints
@@ -33,6 +34,8 @@ def main():
 				bobControl.reset_Iterms()
 				#checks if robot within the distance and angle tolerances
 				while getDistance(bobWay.x[i],bobWay.y[i],bobInfo.x,bobInfo.y)>distance_tolerance or abs(bobWay.theta[i]-bobInfo.theta)>angle_tolerance:
+					print time.time()-last_time
+					last_time=time.time()
 					#updates the current goal pose and the current pose of the robot for the controller class to use
 					bobControl.update_current_positions(bobWay.x[i],bobWay.y[i],bobWay.theta[i],bobInfo.x,bobInfo.y,bobInfo.theta)
 					#calculates the velocities that the robot needs to go (need to specify minimum velocity in the function)
@@ -107,8 +110,7 @@ class Velocity_Controller_PI(object):
 		self.saturation_a=float(saturation_angular)
 		
 		#if velocity input is saturated
-		self.satX=False
-		self.satY=False
+		self.satL=False
 		self.satT=False
 		
 		self.Ki_l=float(Kc_linear)/float(Ti_linear)
@@ -157,9 +159,8 @@ class Velocity_Controller_PI(object):
 		#Integral Contribution 
 		#Sums up the error term with the delta t to remove steady state error
 		#incorporates windup protection when motor is saturated
-		if not self.satX:
+		if not self.satL:
 			self.IX+=self.Ki_l*self.errorX*delta_t
-		if not self.satY:
 			self.IY+=self.Ki_l*self.errorY*delta_t
 		if not self.satT:
 			self.ITheta+=self.Ki_a*self.errorTheta*delta_t
@@ -172,27 +173,18 @@ class Velocity_Controller_PI(object):
 		v_y=v_yP+self.IY
 		v_theta=v_thetaP+self.ITheta
 		
-		#motor saturtaion (sets max speed) 
+		#motor saturtaion (sets max speed)
+		mag=math.sqrt((v_x**2)+(v_y**2))
+		multiplierMax=self.saturation_l/mag 
 		#x saturation
-		if v_x>self.saturation_l:
+		if mag>self.saturation_l:
 			#if motor is saturated, apply windup protection and stops integrating
-			self.satX=True
-			v_x=self.saturation_l
-		elif v_x<-self.saturation_l:
-			self.satX=True
-			v_x=-self.saturation_l
+			self.satL=True
+			v_x*=multiplierMax
+			v_y*=multiplierMax
 		else:
 			#if saturation does not occur, there is no effect
-			self.satX=False
-		#y saturation
-		if v_y>self.saturation_l:
-			self.satY=True
-			v_y=self.saturation_l
-		elif v_y<-self.saturation_l:
-			self.satY=True
-			v_y=-self.saturation_l
-		else:
-			self.satY=False
+			self.satL=False
 		#theta saturation
 		if v_theta>self.saturation_a:
 			self.satT=True
@@ -206,7 +198,6 @@ class Velocity_Controller_PI(object):
 		#controls minimum speed: if velocities are too low, increase to the min velocity
 		mag=math.sqrt((v_x**2)+(v_y**2))
 		multiplier=minVel/mag
-		oldang=math.atan2(v_y,v_x)
 		if mag<minVel:
 			v_x*=multiplier
 			v_y*=multiplier
