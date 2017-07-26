@@ -12,21 +12,22 @@ def main():
 	vels=robot_info_listener()
 	robot_listener=robot_info_listener()
 	rospy.Subscriber('cmd_vel',robot_info,vels.callback)
-	rospy.Subscriber('robot_info',robot_info,robot_listener.callback)
+	rospy.Subscriber('current_robot_info',robot_info,robot_listener.callback)
 	rospy.init_node('Wheel_Velocites',anonymous=True)
 	rate=rospy.Rate(10)#hz
 	pub = rospy.Publisher('speeds',Speeds,queue_size=1)
 	pwm_msg = Speeds()
 	while not rospy.is_shutdown():
-		wheel_output=calc_wheel_velocities(vels.v_x,vels.v_y,vels.omega,robot_listener.theta,vels.max_vel_linear)
+		wheel_output=calc_wheel_velocities(vels.v_x,vels.v_y,vels.omega,robot_listener.theta,vels.max_vel_linear,vels.max_vel_angular)
 		pwm_msg.s1 = wheel_output[0].round(0)
 		pwm_msg.s2 = wheel_output[1].round(0)
 		pwm_msg.s3 = wheel_output[2].round(0)
 		pub.publish(pwm_msg)
-		rospy.loginfo(pwm_msg)
+		print pwm_msg
 		rate.sleep()
+	rospy.spin()
 
-def calc_wheel_velocities(v_x,v_y,omega,theta,maxLinear):
+def calc_wheel_velocities(v_x,v_y,omega,theta,maxLinear,maxAngular):
 	d = 74*10**-3
 	rotation = array([[cos(theta), sin(theta), 0],[-sin(theta),cos(theta),0],[0,0,1]])
 	wheel=array([[-sin(pi/3),cos(pi/3),d],[0,-1,d],[sin(pi/3),cos(pi/3),d]])
@@ -35,11 +36,12 @@ def calc_wheel_velocities(v_x,v_y,omega,theta,maxLinear):
 	wheel_velocities = dot(wheel,robot_velocities)
 	#convert to PWM
 	max_pwm=60
-	maxWheel=wheel_velocities.max()
 	mag=sqrt((v_x**2)+(v_y**2))
-	multiplierScaler=mag/maxLinear
+	maxWheel=abs(wheel_velocities).max()
+	multiplierScaler=(mag/maxLinear)*(omega/maxAngular)
+	wheel_velocities*=multiplierScaler
 	multiplierPWM=max_pwm/maxWheel
-	wheel_velocities*=multiplierScaler*multiplierPWM
+	wheel_velocities*=multiplierPWM
 	return wheel_velocities
 	
 
