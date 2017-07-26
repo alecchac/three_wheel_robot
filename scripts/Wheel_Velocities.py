@@ -8,7 +8,7 @@ from three_wheel_robot.msg import Speeds
 from three_wheel_robot.msg import robot_info
 
 def main():
-	
+	msgct=0
 	vels=robot_info_listener()
 	robot_listener=robot_info_listener()
 	rospy.Subscriber('cmd_vel',robot_info,vels.callback)
@@ -18,16 +18,20 @@ def main():
 	pub = rospy.Publisher('speeds',Speeds,queue_size=1)
 	pwm_msg = Speeds()
 	while not rospy.is_shutdown():
-		wheel_output=calc_wheel_velocities(vels.v_x,vels.v_y,vels.omega,robot_listener.theta,vels.max_vel_linear,vels.max_vel_angular)
-		pwm_msg.s1 = wheel_output[0].round(0)
-		pwm_msg.s2 = wheel_output[1].round(0)
-		pwm_msg.s3 = wheel_output[2].round(0)
-		pub.publish(pwm_msg)
-		print pwm_msg
-		rate.sleep()
+		if vels.max_vel_linear !=0:
+			wheel_output=calc_wheel_velocities(vels.v_x,vels.v_y,vels.omega,robot_listener.theta,vels.max_vel_linear)
+			pwm_msg.s1 = wheel_output[0].round(0)
+			pwm_msg.s2 = wheel_output[1].round(0)
+			pwm_msg.s3 = wheel_output[2].round(0)
+			pub.publish(pwm_msg)
+			print pwm_msg
+			rate.sleep()
+		elif msgct==0:
+			rospy.loginfo("Waiting for subscriber")
+			msgct+=1
 	rospy.spin()
 
-def calc_wheel_velocities(v_x,v_y,omega,theta,maxLinear,maxAngular):
+def calc_wheel_velocities(v_x,v_y,omega,theta,maxLinear,):
 	d = 74*10**-3
 	rotation = array([[cos(theta), sin(theta), 0],[-sin(theta),cos(theta),0],[0,0,1]])
 	wheel=array([[-sin(pi/3),cos(pi/3),d],[0,-1,d],[sin(pi/3),cos(pi/3),d]])
@@ -38,7 +42,7 @@ def calc_wheel_velocities(v_x,v_y,omega,theta,maxLinear,maxAngular):
 	max_pwm=60
 	mag=sqrt((v_x**2)+(v_y**2))
 	maxWheel=abs(wheel_velocities).max()
-	multiplierScaler=(mag/maxLinear)*(omega/maxAngular)
+	multiplierScaler=(mag/maxLinear)
 	wheel_velocities*=multiplierScaler
 	multiplierPWM=max_pwm/maxWheel
 	wheel_velocities*=multiplierPWM
