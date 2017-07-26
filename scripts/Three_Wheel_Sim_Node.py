@@ -14,7 +14,7 @@ def main():
 	#initialize messages
 	pubInfo = robot_info()
 	#initialize listener class
-	control_vels = cmd_vel_listener()
+	control_vels = robot_info_listener()
 	#init publisher and subscriber
 	pub=rospy.Publisher('current_robot_info', robot_info, queue_size=1)
 	rospy.Subscriber('cmd_vel',robot_info,control_vels.callback)
@@ -41,9 +41,8 @@ def main():
 		plt.pause(.001)
 	rospy.spin()
 
-class cmd_vel_listener(object):
-	""" cmd_vel listener"""
-	
+class robot_info_listener(object):
+	""" robot info listener"""
 	def __init__(self):
 		self.x=0.0
 		self.y=0.0
@@ -51,7 +50,8 @@ class cmd_vel_listener(object):
 		self.v_x=0.0
 		self.v_y=0.0
 		self.omega=0.0
-		print 'init'
+		self.max_vel_linear=0.0
+		self.max_vel_angular=0.0
 		
 
 	def callback(self,data):
@@ -61,6 +61,8 @@ class cmd_vel_listener(object):
 		self.v_x=data.v_x
 		self.v_y=data.v_y
 		self.omega=data.omega
+		self.max_vel_linear=data.max_vel_linear
+		self.max_vel_angular=data.max_vel_angular
 
 class robot(object) :
 	"""A three wheeled robot modeled in the world frame

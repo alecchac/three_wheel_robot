@@ -52,6 +52,7 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    waypoints.msg
    robot_info.msg
+   Speeds.msg
  )
 
 ## Generate services in the 'srv' folder

@@ -25,7 +25,6 @@ def main():
 	angle_tolerance=1
 	
 	while (not rospy.is_shutdown()) :
-		last_time=time.time()
 		#checks if waypoint message is not empty
 		if len(bobWay.x)>0:
 			#loops through all waypoints
@@ -34,8 +33,6 @@ def main():
 				bobControl.reset_Iterms()
 				#checks if robot within the distance and angle tolerances
 				while getDistance(bobWay.x[i],bobWay.y[i],bobInfo.x,bobInfo.y)>distance_tolerance or abs(bobWay.theta[i]-bobInfo.theta)>angle_tolerance:
-					print time.time()-last_time
-					last_time=time.time()
 					#updates the current goal pose and the current pose of the robot for the controller class to use
 					bobControl.update_current_positions(bobWay.x[i],bobWay.y[i],bobWay.theta[i],bobInfo.x,bobInfo.y,bobInfo.theta)
 					#calculates the velocities that the robot needs to go (need to specify minimum velocity in the function)
@@ -43,7 +40,9 @@ def main():
 					#publish velocities to topic cmd_vel
 					bobPubInfo.v_x=vels[0]
 					bobPubInfo.v_y=vels[1]
-					bobPubInfo.omega=vels[2]				
+					bobPubInfo.omega=vels[2]
+					bobPubInfo.max_vel_linear=bobControl.saturation_l	
+					bobPubInfo.max_vel_angular=bobControl.saturation_a		
 					pub.publish(bobPubInfo)
 			#once done set velocities to zero and publish velocities
 			bobPubInfo.v_x=0
