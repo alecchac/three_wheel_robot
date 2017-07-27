@@ -9,23 +9,24 @@ def main():
 	#init node
 	rospy.init_node('Three_Wheel_Sim', anonymous=True)
 	#initialize bob robot (x,y,theta(radians))
-	bob = robot(10,10,0)
+	bob = robot(0,0,0)
 	bob.init_plot()
 	#initialize messages
 	pubInfo = robot_info()
 	#initialize listener class
-	control_vels = robot_info_listener()
+	current_pos = robot_info_listener()
 	#init publisher and subscriber
-	pub=rospy.Publisher('current_robot_info', robot_info, queue_size=1)
-	rospy.Subscriber('cmd_vel',robot_info,control_vels.callback)
+	pub=rospy.Publisher('current_robot_info',robot_info,queue_size=1)
+	rospy.Subscriber('Pose_hat',robot_info,current_pos.callback)
 
 	while not rospy.is_shutdown():
 		#take velocities from controller and update velocites in robot class
-		bob.update_velocities(control_vels.v_x,control_vels.v_y,control_vels.omega)
+		bob.update_velocities(current_pos.v_x,current_pos.v_y,current_pos.omega)
 		#clears the plot
 		bob.clear_robot()
 		#calculates new position from new velocites and current position
-		bob.update_pos()
+		#bob.update_pos()
+		bob.set_pos(current_pos.x,current_pos.y,current_pos.theta)
 		#displays on plot
 		bob.display_robot()
 		#publish current robot pose and velocities to the robot_info topic
@@ -125,7 +126,11 @@ class robot(object) :
 		if self.theta> 2*math.pi:
 			self.theta-=math.pi*2
 		elif self.theta < -math.pi*2:
-			self.theta+=math.pi*2		
+			self.theta+=math.pi*2
+	def set_pos(self,x,y,theta):
+		self.x=x
+		self.y=y
+		self.theta=theta
 	
 	def display_robot(self):
 		#velocity vector arrow

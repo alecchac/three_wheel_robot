@@ -1,7 +1,8 @@
 <launch>
 <node name="User" pkg="three_wheel_robot" type="User_Node.py" />
-<node name="Three_Wheel_Sim" pkg="three_wheel_robot" type="Three_Wheel_Sim_Node.py"/>
+<node name="Three_Wheel_Sim" pkg="three_wheel_robot" type="Three_Wheel_Sim_Node.py" output="screen"/>
 <node name="Controller" pkg="three_wheel_robot" type="Velocity_Controller_PI_Node.py" />
-<node name="Wheel_Velocities" pkg="three_wheel_robot" type="Wheel_Velocities.py" output="screen" respawn="true"/>
+<node name="Wheel_Velocities" pkg="three_wheel_robot" type="Wheel_Velocities.py" respawn="true"/>
+<node name="KF" pkg="three_wheel_robot" type="three_wheel_KF.py" />
 </launch>
   

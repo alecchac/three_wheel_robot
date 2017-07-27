@@ -51,21 +51,22 @@ class camera_listener(object):
 
 
 	def __init__(self):
+		
         #world frame position
 		self.x = 0.0
 		self.y = 0.0
-        self.z = 0.0
+        	self.z = 0.0
         #quaternions
-        self.quaternion_x = 0.0
-        self.quaternion_y = 0.0
-        self.quaternion_z = 0.0
-        self.quaternion_w = 0.0
+        	self.quaternion_x = 0.0
+        	self.quaternion_y = 0.0
+        	self.quaternion_z = 0.0
+        	self.quaternion_w = 0.0
         #world frame orientation
-        self.theta_x = 0.0
-        self.theta_y = 0.0
-        self.theta_z = 0.0
+        	self.theta_x = 0.0
+        	self.theta_y = 0.0
+        	self.theta_z = 0.0
         #covariance matrix
-        self.cov = [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        	self.cov = [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -74,38 +75,40 @@ class camera_listener(object):
 
 
 	def callback(self,data):
+		
 
         #free space position 
 		self.x = data.pose.pose.position.x
-        self.y = data.pose.pose.position.y
-        self.z = data.pose.pose.position.z
+        	self.y = data.pose.pose.position.y
+        	self.z = data.pose.pose.position.z
         #angular orientation in quaternions
 		self.quaternion_x = data.pose.pose.orientation.x
-        self.quaternion_y = data.pose.pose.orientation.y
-        self.quaternion_z = data.pose.pose.orientation.z
-        self.quaternion_w = data.pose.pose.orientation.w
+        	self.quaternion_y = data.pose.pose.orientation.y
+        	self.quaternion_z = data.pose.pose.orientation.z
+        	self.quaternion_w = data.pose.pose.orientation.w
         # define an array with quaternions
-        quaternion = (self.quaternion_x,
-                      self.quaternion_y,
-                      self.quaternion_z,
-                      self.quaternion_w)
+        	quaternion = (self.quaternion_x,
+                      	      self.quaternion_y,
+                              self.quaternion_z,
+                              self.quaternion_w)
 
         # define obtain euler angles in radians
-        euler = tf.transformations.euler_from_quaternion(quaternion)
-        self.theta_x = euler[0]
-        self.theta_y = euler[1]
-        self.theta_z = euler[2]
+        	euler = tf.transformations.euler_from_quaternion(quaternion)
+        	self.theta_x = euler[0]
+        	self.theta_y = euler[1]
+        	self.theta_z = euler[2]
 
         #covarince matrix from camera
-        self.cov = [data.pose.covariance[0:7],
-                   [data.pose.covariance[7:12]],
+        	self.cov = [data.pose.covariance[0:6],
+                   [data.pose.covariance[6:12]],
                    [data.pose.covariance[12:18]],
                    [data.pose.covariance[18:24]],
                    [data.pose.covariance[24:30]],
-                   [data.pose.covariante[30:36]]]
+                   [data.pose.covariance[30:36]]]
 
 
 if __name__ == '__main__':
+	
 
 #-----------------Set up for all your fuctions -----------------
 #Here you put init fuctions or constant definitions for your own fuctions
@@ -119,15 +122,15 @@ if __name__ == '__main__':
 
 	#create object from listener classes
 	control_vels = cmd_vel_listener()
-    measure_pose = camera_listener()
+    	measure_pose = camera_listener()
 
 	#init publisher and subscribers
-    #Publisher of this node (Topic, mesage) 
+    	#Publisher of this node (Topic, mesage) 
 	pub = rospy.Publisher('Pose_hat', robot_info, queue_size=10)
-    #Subscribe to controller (Topic, message, callback function)
+    	#Subscribe to controller (Topic, message, callback function)
 	rospy.Subscriber('cmd_vel',robot_info,control_vels.callback)
-    #Subscribe to camera
-    rospy.Subscriber('/ram/amc/_pose',PoseWithCovarianceStamped,input_pose.callback)
+    	#Subscribe to camera
+    	#rospy.Subscriber('/ram/amcl_pose',PoseWithCovarianceStamped,measure_pose.callback)
 
     # ------------------- End of ROS set up --------------------
 
@@ -136,37 +139,37 @@ if __name__ == '__main__':
     #-------------------KF set-up ------------------------------
     #create the object from kalman filter class
     
-    filter = KF(A,B,C,R,Q,K)
-    #-previous state
-    mt_1 = 0.0
-    mt_2 = 0.0
-    mt_3 = 0.0
+    	filter = KF(A,B,C,R,Q,K)
+    	#-previous state
+    	mt_1 = 0.0
+    	mt_2 = 0.0
+    	mt_3 = 0.0
 
 
-    mt_ = [[mt_1],
+    	mt_ = [[mt_1],
            [mt_2],
            [mt_3]]
 
     #previous covariance
-    St_1 = 0.0
-    St_2 = 0.0
-    St_3 = 0.0
+    	St_1 = 0.0
+    	St_2 = 0.0
+    	St_3 = 0.0
 
-    St_ = [[St_1,0,0],
+    	St_ = [[St_1,0,0],
            [0,St_2,0],
            [0,0,St_3]]
 
     #initial condition of kalman filter
 
-    last_pkg = [mt_, St_]
+    	last_pkg = [mt_, St_]
 
-    ut = [[0],
+    	ut = [[0],
           [0],
           [0]]
 
     # dt = 0.00006
-    t1 = 0.0
-    t2 = 0.0
+   	t1 = time.time()
+    	t2 = time.time()
     #----------------End of KF set up --------------------
 
 #--------------------End of Definitions and Set-up--------
@@ -175,8 +178,8 @@ if __name__ == '__main__':
 
 #------------------------- Main Loop --------------------
 
-    while not rospy.is_shutdown():
-        
+	while not rospy.is_shutdown():
+        #for t in range(0,100):
         #-----------------Get measurments---------------------
 
         #Here you obtain zt  which is a list containing all the elements
@@ -188,18 +191,17 @@ if __name__ == '__main__':
         #       [m_pos_y],       # y position
         #       [m_theta],       # theta angular orientation
 
-        zt = [[measure_pose.x],
-              [measure_pose.y],
-              [measure_pose.theta_z]]
-
+	#	zt = [[measure_pose.x],
+        #      [measure_pose.y],
+        #      [measure_pose.theta_z]]
+		zt = [[0],[0],[0]]	
         #----------------- Get the sensor Covariance -------------
         # This is the covariance matrix Q wich comes from the measurments
 
         # Q = covariance_zt
 
-        Q = measure_pose.cov
-
-        #----------------- Get the system input -------------
+        	#Q = measure_pose.cov #revisar que covarianza es
+ #----------------- Get the system input -------------
         # From the topic you get the input apply to system in this case
         # World frame velocities as shown below
 
@@ -207,48 +209,55 @@ if __name__ == '__main__':
         #       [Vy],           #linear y velocity
         #       [omega]]        #angular omega velocity
 
-        ut = [[control_vels.v_x],
+        	ut = [[control_vels.v_x],
               [control_vels.v_y],
               [control_vels.omega]]
+		#ut = [[3],[2],[1]]
+		#print(ut)
 
-        vel_x = cmd_vel_listener.v_x
-        vel_y = cmd_vel_listener.v_y
-        omega = cmd_vel_listener.omega
+        	vel_x = control_vels.v_x
+        	vel_y = control_vels.v_y
+        	omega = control_vels.omega
 
         #----------- Beginnign of Kalman Filter -----------
-        t2 = time.time()
-        dt = t2-t1
+        	t2 = time.time()
+        	dt = t2-t1
+		#print(dt)
+		#print(t2)
+		#dt = 0.00005
         # main function to compute the Kalman Filter
-        pkg = filter.KF_compute(last_pkg[0], last_pkg[1], ut, zt, Q, dt)
+        	pkg = filter.KF_compute(last_pkg[0], last_pkg[1], ut, zt, Q, dt)
+		#pkg = filter.compute(last_pkg[0],ut,dt)
         # separate state vector into individual arrays
-
-        t1 = time.time()
-
-        last_pkg = pkg 
-        mt = pkg[0]
-        #output feedback controlle
+		
+        	t1 = time.time()
+		
+        	last_pkg = pkg 
+        	mt = pkg[0]
+        #output feedback controller
         #ut = np.dot(F,mt)
         #KF results you can separate the list and plot individually
         #according to the mt index shown below
-        pos_x = mt[0]
-        pos_y = mt[1]
-        theta = mt[2]
-
+        	pos_x = mt[0]
+        	pos_y = mt[1]
+        	theta = mt[2]
+		#print(pos_x)
         #----------------End of Kalman Filter -------------------
 
         #---------------Pubblish the results -------------------
         #linear and angular orientation
-        pubInfo.x = pos_x
-        pubInfo.y = pos_y
-        pubInfo.theta=theta
+        	pubInfo.x = pos_x
+        	pubInfo.y = pos_y
+        	pubInfo.theta=theta
 
         #linear and angular velocity
-        pubInfo.v_x = vel_x
-        pubInfo.v_y = vel_y
-        pubInfo.omega = omega
+        	pubInfo.v_x = vel_x
+        	pubInfo.v_y = vel_y
+        	pubInfo.omega = omega
 
-        pub.publish(pubInfo)
+        	pub.publish(pubInfo)
+       
 
-    print("Exiting ... ")
+	print("Exiting ... ")
 
 

@@ -79,31 +79,42 @@ class KF():
       def KF_compute(self, mt_, St_, ut, zt, Q, dt):
 
             #control matrix
-            B = [[dt,0,0],
+            self.B = [[dt,0,0],
                  [0,dt,0],
-                 [0,0,dt]]
+                 [0,0,dt]]	
+	    #print()
             #covariance matrix from sensors
             self.Q = Q
-
+		
             # Step 1: Predictive
 
             #predict the state Ax+Bu = x' 
             self.pmt_ = np.add( np.dot( self.A , mt_ ) , np.dot( self.B , ut ) )
+	    
             #predict the covariance matrix
             self.pSt_ = np.add( np.dot( np.dot( self.A , St_ ) , np.transpose(self.A) ) , self.R )
 
             # Step 2: Belief compute and corrective
 
             #determinate the Kalman gain
-            self.K = np.dot( np.dot( self.pSt_ , np.transpose(self.C)) , np.linalg.inv( np.add( np.dot( np.dot( self.C , self.pSt_ ) , np.transpose(self.C) ) , self.Q)))
+            #self.K = np.dot( np.dot( self.pSt_ , np.transpose(self.C)) , np.linalg.inv( np.add( np.dot( np.dot( self.C , self.pSt_ ) , np.transpose(self.C) ) , self.Q)))
             #determinate the corrected state
             self.mt = np.add( self.pmt_ , np.dot( self.K , np.subtract( zt , np.dot( self.C , self.pmt_ ) ) ) )
             #determinate the corrected covariance matrix
             self.St = np.dot( np.subtract( self.I , np.dot( self.K , self.C ) ) , self.pSt_ )
-
+	    #print(self.mt[0])
             #retun KF results: state vector and Covariance matrix
-
+	    #print(self.St)
             return [self.mt, self.St]
+
+
+      def compute(self, mt_, ut, dt):
+                        #control matrix
+            self.B = [[dt,0,0],
+                 [0,dt,0],
+                 [0,0,dt]]	
+	    self.mt = np.add( np.dot( self.A , mt_ ) , np.dot( self.B , ut ) )
+	    return [self.mt, self.St]
 
 
 #if __name__ == '__main__':
