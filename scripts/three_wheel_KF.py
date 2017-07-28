@@ -22,11 +22,20 @@ from KF_class.Three_wheel_robot_system_1 import A,B,C,F
 from KF_class.kalman_settings_1 import R,Q,K
 
 
+def plot(t,y):
+	global p2
+	
+	fig = plt.gcf()
+	fig.show()
+	fig.canvas.draw()
+	p2 = plt.scatter(t, y, s = 100, c = xp, alpha = 0.2)
+	fig.canvas.draw()
+
+
 #listener class (comes from controller node)
 class cmd_vel_listener(object):
 
     
-
 	def __init__(self):
 
 		self.x=0.0
@@ -112,9 +121,7 @@ class camera_listener(object):
 
 
 
-
 if __name__ == '__main__':
-
 
 #-----------------Set up for all your fuctions -----------------
 #Here you put init fuctions or constant definitions for your own fuctions
@@ -140,7 +147,6 @@ if __name__ == '__main__':
 	#rospy.Subscriber('',PoseWithCovarianceStamped,measure_pose.callback)
 
     # ------------------- End of ROS set up --------------------
-
 
 
     #-------------------KF set-up ------------------------------
@@ -178,21 +184,20 @@ if __name__ == '__main__':
    	t1 = time.time()
 	t2 = time.time()
     # #----------------End of KF set up --------------------
-	# pos_x = 0.0
-	# pos_y = 0.0
-	# theta = 0.0
+	pos_x = [0.0]
+	pos_y = [0.0]
+	theta = [0.0]
 #--------------------End of Definitions and Set-up--------
 
-	n0 =[0]
-	n2 = [1]
-	n3 = [2]
 	zt = [[0],[0],[0]]
 
-
+	t = 0
 #------------------------- Main Loop --------------------
+	# plt.figure()
+	plt.ion()
 
 	while not rospy.is_shutdown():
-	
+		t=t+1
 		#for t in range(0,100):
 
 		#-----------------Get measurments---------------------
@@ -210,6 +215,21 @@ if __name__ == '__main__':
 		# 	[measure_pose.y],
 		# 	[measure_pose.theta_z]]
 
+		zt = [[pos_x[0]+r.uniform(0.1,-0.1)],
+			  [pos_y[0]+r.uniform(0.1,-0.1)],
+			  [theta[0]+r.uniform(0.01,-0.01)]]
+
+		# plt.scatter(t,pos_x[0])
+		# plt.scatter(t,zt[0][0])
+		# plt.pause(0.05)
+		# plt.hold(True)
+		# plt.show()
+
+		# print(pos_x[0])
+		# print(t)
+
+		# print(zt[0])
+		print(pos_x)
 
 		
 
@@ -258,16 +278,15 @@ if __name__ == '__main__':
 		pos_x = mt[0]
 		pos_y = mt[1]
 		theta = mt[2]
-		print(pos_x)
+
+		# print(pos_x[0])
 
 
 		# n0 = np.random.normal(0,1,1)
 		# n1 = np.random.normal(0,1,1)
 		# n2 = np.random.normal(0,1,1)
 
-		zt = [[pos_x+r.uniform(1,-1)],
-		[pos_y+r.uniform(1,-1)],
-		[theta+r.uniform(1,-1)]]
+
 
 		#----------------End of Kalman Filter -------------------
 

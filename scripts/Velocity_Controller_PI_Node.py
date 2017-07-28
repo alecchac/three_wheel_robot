@@ -21,7 +21,8 @@ def main():
 	pub=rospy.Publisher('cmd_vel',robot_info,queue_size=1)
 	bobPubInfo=robot_info()
 	#set tolerance for goal pose 
-	distance_tolerance=2.1
+	# distance_tolerance=2.1
+	distance_tolerance=3
 	angle_tolerance=1
 	
 	while (not rospy.is_shutdown()) :

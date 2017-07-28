@@ -69,7 +69,9 @@ class KF():
                         [0,0,0,St4]]
 
             self.z_last = [[0],[0],[0]]
-            # self.falg = 0
+            self.flag1 = 0
+            self.flag2 = 0
+            self.cont = 0
 
 
       # This function computes the kalman filter its arguments are:
@@ -88,11 +90,9 @@ class KF():
             #covariance matrix from sensors
             self.Q = Q
 
-            # if self.flag == 10:
-            #       self.flag = 0
-		# if zt == self.z_last:
-            #       self.falg+=1
-            # Step 1: Predictive
+            # if zt == self.z_last:
+            #       self.falg1 = 1
+            # if self.flag1
 
             #predict the state Ax+Bu = x' 
             self.pmt_ = np.add( np.dot( self.A , mt_ ) , np.dot( self.B , ut ) )
