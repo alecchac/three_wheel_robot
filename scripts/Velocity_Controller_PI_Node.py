@@ -10,7 +10,7 @@ def main():
 	rospy.init_node('Controller',anonymous=True)
 	#initialize controller
 	#(self,saturation_linear,saturation_angular,Kc_linear,Ti_linear,Kc_angular,Ti_angular)
-	bobControl=Velocity_Controller_PI(5,1,.05,15,.5,50)
+	bobControl=Velocity_Controller_PI(10,1,.1,15,.5,50)
 	#initialize listener classes
 	bobWay=waypoint_listener()
 	bobInfo=robot_info_listener()
