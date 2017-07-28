@@ -10,6 +10,7 @@ from std_msgs.msg import UInt8, String
 from geometry_msgs.msg import Twist, Vector3, PoseWithCovarianceStamped
 import time
 import tf
+import random as r
 
 #custom messages
 from three_wheel_robot.msg import robot_info
@@ -110,17 +111,16 @@ class camera_listener(object):
 				[data.pose.covariance[30:36]]]
 
 
+
+
 if __name__ == '__main__':
 
-
-
-	
 
 #-----------------Set up for all your fuctions -----------------
 #Here you put init fuctions or constant definitions for your own fuctions
 
-    #------------------ ROS set up -----------------------------
-    # Start node
+	#------------------ ROS set up -----------------------------
+	# Start node
 	rospy.init_node('Three_wheel_robot_KF', anonymous=True)
 
 	#initialize messages
@@ -131,12 +131,13 @@ if __name__ == '__main__':
 	measure_pose = camera_listener()
 
 	#init publisher and subscribers
-    	#Publisher of this node (Topic, mesage) 
+	#Publisher of this node (Topic, mesage) 
 	pub = rospy.Publisher('Pose_hat', robot_info, queue_size=10)
-    	#Subscribe to controller (Topic, message, callback function)
+	#Subscribe to controller (Topic, message, callback function)
 	rospy.Subscriber('cmd_vel',robot_info,control_vels.callback)
-    	#Subscribe to camera
-    	#rospy.Subscriber('/ram/amcl_pose',PoseWithCovarianceStamped,measure_pose.callback)
+	#Subscribe to camera
+	# rospy.Subscriber('/ram/amcl_pose',PoseWithCovarianceStamped,measure_pose.callback)
+	#rospy.Subscriber('',PoseWithCovarianceStamped,measure_pose.callback)
 
     # ------------------- End of ROS set up --------------------
 
@@ -176,17 +177,23 @@ if __name__ == '__main__':
     # dt = 0.00006
    	t1 = time.time()
 	t2 = time.time()
-    #----------------End of KF set up --------------------
-
+    # #----------------End of KF set up --------------------
+	# pos_x = 0.0
+	# pos_y = 0.0
+	# theta = 0.0
 #--------------------End of Definitions and Set-up--------
 
+	n0 =[0]
+	n2 = [1]
+	n3 = [2]
+	zt = [[0],[0],[0]]
 
 
 #------------------------- Main Loop --------------------
 
 	while not rospy.is_shutdown():
 	
-	#for t in range(0,100):
+		#for t in range(0,100):
 
 		#-----------------Get measurments---------------------
 
@@ -199,17 +206,20 @@ if __name__ == '__main__':
 		#       [m_pos_y],       # y position
 		#       [m_theta],       # theta angular orientation
 
-		#	zt = [[measure_pose.x],
-		#      [measure_pose.y],
-		#      [measure_pose.theta_z]]
+		# zt = [[measure_pose.x],
+		# 	[measure_pose.y],
+		# 	[measure_pose.theta_z]]
 
-		zt = [[0],[0],[0]]	
+
+		
+
+			
 		#----------------- Get the sensor Covariance -------------
 		# This is the covariance matrix Q wich comes from the measurments
 
 		# Q = covariance_zt
 
-			#Q = measure_pose.cov #revisar que covarianza es
+		#Q = measure_pose.cov #revisar que covarianza es
 		#----------------- Get the system input -------------
 		# From the topic you get the input apply to system in this case
 		# World frame velocities as shown below
@@ -219,9 +229,10 @@ if __name__ == '__main__':
 		#       [omega]]        #angular omega velocity
 
 		ut = [[control_vels.v_x],
-		      [control_vels.v_y],
-		      [control_vels.omega]]
-		# ut = [[3],[2],[1]]
+		[control_vels.v_y],
+		[control_vels.omega]]
+
+		# ut = [[0],[0],[0]]
 		#print(ut)
 
 		vel_x = control_vels.v_x
@@ -247,6 +258,17 @@ if __name__ == '__main__':
 		pos_x = mt[0]
 		pos_y = mt[1]
 		theta = mt[2]
+		print(pos_x)
+
+
+		# n0 = np.random.normal(0,1,1)
+		# n1 = np.random.normal(0,1,1)
+		# n2 = np.random.normal(0,1,1)
+
+		zt = [[pos_x+r.uniform(1,-1)],
+		[pos_y+r.uniform(1,-1)],
+		[theta+r.uniform(1,-1)]]
+
 		#----------------End of Kalman Filter -------------------
 
 		#---------------Pubblish the results -------------------
@@ -256,7 +278,7 @@ if __name__ == '__main__':
 		pubInfo.theta=theta
 
 
-		print(pos_x)
+		#print(pos_x)
 		#linear and angular velocity
 		pubInfo.v_x = vel_x
 		pubInfo.v_y = vel_y

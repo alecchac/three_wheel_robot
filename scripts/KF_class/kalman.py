@@ -67,8 +67,9 @@ class KF():
                         [0,St2,0,0],
                         [0,0,St3,0],
                         [0,0,0,St4]]
+
             self.z_last = [[0],[0],[0]]
-            
+            # self.falg = 0
 
 
       # This function computes the kalman filter its arguments are:
@@ -78,17 +79,19 @@ class KF():
       # zt  : is the vector of measurments from sensors
       # Q   : is the covariance  matrix from the sensors
       # dt  : is the sample peroid in seconds
+
       def KF_compute(self, mt_, St_, ut, zt, Q, dt):
-            # cont = 0
-            
             #control matrix
             self.B = [[dt,0,0],
                  [0,dt,0],
                  [0,0,dt]]	
-	    #print()
             #covariance matrix from sensors
             self.Q = Q
-		
+
+            # if self.flag == 10:
+            #       self.flag = 0
+		# if zt == self.z_last:
+            #       self.falg+=1
             # Step 1: Predictive
 
             #predict the state Ax+Bu = x' 
@@ -97,16 +100,19 @@ class KF():
             self.pSt_ = np.add( np.dot( np.dot( self.A , St_ ) , np.transpose(self.A) ) , self.R )
 
             # Step 2: Belief compute and corrective
-            if not (zt == self.z_last) :
+            # if not (self.flag == 10):
                   #determinate the Kalman gain
-                  self.K = np.dot( np.dot( self.pSt_ , np.transpose(self.C)) , np.linalg.inv( np.add( np.dot( np.dot( self.C , self.pSt_ ) , np.transpose(self.C) ) , self.Q)))
+            self.K = np.dot( np.dot( self.pSt_ , np.transpose(self.C)) , np.linalg.inv( np.add( np.dot( np.dot( self.C , self.pSt_ ) , np.transpose(self.C) ) , self.Q)))
+                  # cont+=cont
+                  # print("adentro")
+            # else:
+                  # print("afuera")
             #determinate the corrected state
             self.mt = np.add( self.pmt_ , np.dot( self.K , np.subtract( zt , np.dot( self.C , self.pmt_ ) ) ) )
             #determinate the corrected covariance matrix
             self.St = np.dot( np.subtract( self.I , np.dot( self.K , self.C ) ) , self.pSt_ )
             
-            self.z_last = zt
-
+            # self.z_last = zt
             #retun KF results: state vector and Covariance matrix
             return [self.mt, self.St]
 
