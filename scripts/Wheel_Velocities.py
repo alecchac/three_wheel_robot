@@ -39,13 +39,30 @@ def calc_wheel_velocities(v_x,v_y,omega,theta,maxLinear,maxAngular):
 	robot_velocities = dot(rotation,world_velocities)
 	wheel_velocities = dot(wheel,robot_velocities)
 	#convert to PWM
-	max_pwm=60
+	max_pwm=60.0
+	min_pwm=20.0
 	mag=sqrt((v_x**2)+(v_y**2))
 	maxWheel=abs(wheel_velocities).max()
-	multiplierScaler=(mag/maxLinear)*(omega/maxAngular)
-	wheel_velocities*=multiplierScaler
-	multiplierPWM=max_pwm/maxWheel
-	wheel_velocities*=multiplierPWM
+	minWheel=abs(wheel_velocities).min()
+	if (maxWheel-minWheel == 0) and maxWheel > 0:
+		if maxWheel>60:
+			if wheel_velocities.max()>0:
+				wheel_velocities = array([[max_pwm],[max_pwm],[max_pwm]])
+			else:
+				wheel_velocities = array([[-max_pwm],[-max_pwm],[-max_pwm]])
+		elif maxWheel<20:
+			wheel_velocities=array([[0],[0],[0]])
+		else:
+			if wheel_velocities.max()>0:
+				wheel_velocities = array([[maxWheel],[maxWheel],[maxWheel]])
+			else:
+				wheel_velocities = array([[-maxWheel],[-maxWheel],[-maxWheel]])
+
+	elif  (maxWheel-minWheel == 0) and maxWheel == 0:
+		wheel_velocities = array([[0],[0],[0]])
+	else:
+		for i in range(0,3):
+			wheel_velocities[i] = min_pwm+(max_pwm-min_pwm)/(maxWheel-minWheel)*(wheel_velocities[i]-minWheel)
 	return wheel_velocities
 	
 

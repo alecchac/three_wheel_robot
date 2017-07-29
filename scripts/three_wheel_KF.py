@@ -1,6 +1,5 @@
 #! /usr/bin/python
 
-import matplotlib.pyplot as plt 
 import numpy as np
 import math
 from math import pow,atan2,sqrt,cos,sin,asin,pi
@@ -22,14 +21,7 @@ from KF_class.Three_wheel_robot_system_1 import A,B,C,F
 from KF_class.kalman_settings_1 import R,Q,K
 
 
-def plot(t,y):
-	global p2
-	
-	fig = plt.gcf()
-	fig.show()
-	fig.canvas.draw()
-	p2 = plt.scatter(t, y, s = 100, c = xp, alpha = 0.2)
-	fig.canvas.draw()
+
 
 
 #listener class (comes from controller node)
@@ -141,9 +133,9 @@ if __name__ == '__main__':
 	#Publisher of this node (Topic, mesage) 
 	pub = rospy.Publisher('Pose_hat', robot_info, queue_size=10)
 	#Subscribe to controller (Topic, message, callback function)
-	rospy.Subscriber('cmd_vel',robot_info,control_vels.callback)
+	# rospy.Subscriber('cmd_vel',robot_info,control_vels.callback)
 	#Subscribe to camera
-	# rospy.Subscriber('/ram/amcl_pose',PoseWithCovarianceStamped,measure_pose.callback)
+	rospy.Subscriber('/ram/amcl_pose',PoseWithCovarianceStamped,measure_pose.callback)
 	#rospy.Subscriber('',PoseWithCovarianceStamped,measure_pose.callback)
 
     # ------------------- End of ROS set up --------------------
@@ -194,7 +186,7 @@ if __name__ == '__main__':
 	t = 0
 #------------------------- Main Loop --------------------
 	# plt.figure()
-	plt.ion()
+	# plt.ion()
 
 	while not rospy.is_shutdown():
 		t=t+1
@@ -211,13 +203,13 @@ if __name__ == '__main__':
 		#       [m_pos_y],       # y position
 		#       [m_theta],       # theta angular orientation
 
-		# zt = [[measure_pose.x],
-		# 	[measure_pose.y],
-		# 	[measure_pose.theta_z]]
+		zt = [[measure_pose.x],
+			[measure_pose.y],
+			[measure_pose.theta_z]]
 
-		zt = [[pos_x[0]+r.uniform(0.1,-0.1)],
-			  [pos_y[0]+r.uniform(0.1,-0.1)],
-			  [theta[0]+r.uniform(0.01,-0.01)]]
+		# zt = [[pos_x[0]+r.uniform(0.1,-0.1)],
+		# 	  [pos_y[0]+r.uniform(0.1,-0.1)],
+		# 	  [theta[0]+r.uniform(0.01,-0.01)]]
 
 		# plt.scatter(t,pos_x[0])
 		# plt.scatter(t,zt[0][0])
@@ -229,7 +221,7 @@ if __name__ == '__main__':
 		# print(t)
 
 		# print(zt[0])
-		print(pos_x)
+		# print(pos_x)
 
 		
 
@@ -248,11 +240,11 @@ if __name__ == '__main__':
 		#       [Vy],           #linear y velocity
 		#       [omega]]        #angular omega velocity
 
-		ut = [[control_vels.v_x],
-		[control_vels.v_y],
-		[control_vels.omega]]
+		# ut = [[control_vels.v_x],
+		# [control_vels.v_y],
+		# [control_vels.omega]]
 
-		# ut = [[0],[0],[0]]
+		ut = [[0],[0],[0]]
 		#print(ut)
 
 		vel_x = control_vels.v_x
@@ -302,6 +294,7 @@ if __name__ == '__main__':
 		pubInfo.v_x = vel_x
 		pubInfo.v_y = vel_y
 		pubInfo.omega = omega
+		# print pubInfo
 
 		pub.publish(pubInfo)
        

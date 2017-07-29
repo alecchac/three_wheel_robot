@@ -10,7 +10,7 @@ def main():
 	rospy.init_node('Controller',anonymous=True)
 	#initialize controller
 	#(self,saturation_linear,saturation_angular,Kc_linear,Ti_linear,Kc_angular,Ti_angular)
-	bobControl=Velocity_Controller_PI(10,1,.1,15,.5,50)
+	bobControl=Velocity_Controller_PI(10,1,.1,15,.1,50)
 	#initialize listener classes
 	bobWay=waypoint_listener()
 	bobInfo=robot_info_listener()
@@ -39,8 +39,8 @@ def main():
 					#calculates the velocities that the robot needs to go (need to specify minimum velocity in the function)
 					vels=bobControl.update_velocities(bobWay.min_velocity[i])
 					#publish velocities to topic cmd_vel
-					bobPubInfo.v_x=vels[0]
-					bobPubInfo.v_y=vels[1]
+					bobPubInfo.v_x=0
+					bobPubInfo.v_y=0
 					bobPubInfo.omega=vels[2]
 					bobPubInfo.max_vel_linear=bobControl.saturation_l	
 					bobPubInfo.max_vel_angular=bobControl.saturation_a		

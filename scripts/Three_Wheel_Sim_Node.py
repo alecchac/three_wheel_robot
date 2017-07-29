@@ -100,8 +100,8 @@ class robot(object) :
 		#allows plotting continuously
 		plt.ion()
 		#set bounds of the plot
-		plt.xlim([0,100])
-		plt.ylim([0,100])
+		plt.xlim([0,580])
+		plt.ylim([0,350])
 		plt.grid('on')
 		
 	def update_pos(self):
