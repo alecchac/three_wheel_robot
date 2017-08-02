@@ -42,39 +42,48 @@ def calc_wheel_velocities(v_x,v_y,omega,theta,maxLinear,maxAngular):
         #print "Wheel Velocities " + str(wheel_velocities)
 	#convert to PWM
 	max_pwm=60.0
-	min_pwm=30.0
-	mag=sqrt((v_x**2)+(v_y**2))
-	maxWheel=abs(wheel_velocities).max()
-	minWheel=abs(wheel_velocities).min()
-	if maxWheel == minWheel:
-		if maxWheel == 0:
-                        print "zero"
-			wheel_velocities = array([[0],[0],[0]])
-		elif maxWheel <= min_pwm:
-                        print "small " + str(maxWheel)
-			if wheel_velocities[0]>0:
-				wheel_velocities += min_pwm
+	min_pwm=1
+	absv = abs(wheel_velocities)
+
+	# mag=sqrt((v_x**2)+(v_y**2))
+	# maxWheel=abs(wheel_velocities).max()
+	# minWheel=abs(wheel_velocities).min()
+	#print 'before: ' + str(wheel_velocities)
+	for i in range(3):
+		if absv[i]>max_pwm:
+			if wheel_velocities[i]>0:
+				wheel_velocities[i]=max_pwm
 			else:
-				wheel_velocities -= min_pwm
-		elif maxWheel>max_pwm:
-                        print "big" + str(maxWheel)
-			scale_factor = max_pwm/maxWheel
-			wheel_velocities *= scale_factor
-	else:
-		for i in range(0,3):
-			#print "before: " + str(wheel_velocities[i])
-			if wheel_velocities[i] >0 and max_pwm<0:
-				max_pwm *= -1
-				min_pwm *= -1
-				maxWheel *= -1
-				minWheel *= -1
-			elif wheel_velocities[i] <0 and max_pwm>0:
-				max_pwm *= -1
-				min_pwm *= -1
-				maxWheel *= -1
-				minWheel *= -1 
-			wheel_velocities[i] = min_pwm+((max_pwm-min_pwm)/(maxWheel-minWheel))*(wheel_velocities[i]-minWheel)
-			#print "after: " + str(wheel_velocities[i])
+				wheel_velocities[i]=-max_pwm
+
+	#print 'after: ' + str(wheel_velocities)
+	# if maxWheel == minWheel:
+	# 	if maxWheel == 0:
+    #                     print "zero"
+	# 		wheel_velocities = array([[0],[0],[0]])
+	# 	elif maxWheel <= min_pwm:
+    #                     print "small " + str(maxWheel)
+	# 		if wheel_velocities[0]>0:
+	# 			wheel_velocities += min_pwm
+	# 		else:
+	# 			wheel_velocities -= min_pwm
+	# 	elif maxWheel>max_pwm:
+    #                     print "big" + str(maxWheel)
+	# 		scale_factor = max_pwm/maxWheel
+	# 		wheel_velocities *= scale_factor
+	# else:
+	# 	for i in range(0,3):
+	# 		if wheel_velocities[i] >0 and max_pwm<0:
+	# 			max_pwm *= -1
+	# 			min_pwm *= -1
+	# 			maxWheel *= -1
+	# 			minWheel *= -1
+	# 		elif wheel_velocities[i] <0 and max_pwm>0:
+	# 			max_pwm *= -1
+	# 			min_pwm *= -1
+	# 			maxWheel *= -1
+	# 			minWheel *= -1 
+	# 		wheel_velocities[i] = min_pwm+((max_pwm-min_pwm)/(maxWheel-minWheel))*(wheel_velocities[i]-minWheel)
 	return wheel_velocities
 
 

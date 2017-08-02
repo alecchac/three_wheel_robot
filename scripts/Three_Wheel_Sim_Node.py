@@ -4,6 +4,7 @@ import math
 import time
 import rospy
 from three_wheel_robot.msg import robot_info
+from three_wheel_robot.msg import waypoints
 
 def main():
 	#init node
@@ -14,10 +15,12 @@ def main():
 	#initialize messages
 	pubInfo = robot_info()
 	#initialize listener class
+	bobWay=waypoint_listener()
 	current_pos = robot_info_listener()
 	#init publisher and subscriber
 	pub=rospy.Publisher('current_robot_info',robot_info,queue_size=1)
 	rospy.Subscriber('Pose_hat',robot_info,current_pos.callback)
+	rospy.Subscriber('goal_pos',waypoints,bobWay.callback)
 
 	while not rospy.is_shutdown():
 		#take velocities from controller and update velocites in robot class
@@ -29,6 +32,7 @@ def main():
 		bob.set_pos(current_pos.x,current_pos.y,current_pos.theta)
 		#displays on plot
 		bob.display_robot()
+		dots=plt.scatter(bobWay.x,bobWay.y)
 		#publish current robot pose and velocities to the robot_info topic
 		pubInfo.x=bob.x
 		pubInfo.y=bob.y
@@ -41,6 +45,21 @@ def main():
 		#allows plot to plot continuously
 		plt.pause(.001)
 	rospy.spin()
+
+class waypoint_listener(object):
+	""" waypoint listener"""
+	def __init__(self):
+		self.x=()
+		self.y=()
+		self.theta=()
+		self.min_velocity=()
+		
+
+	def callback(self,data):
+		self.x=data.x
+		self.y=data.y
+		self.theta=data.theta
+		self.min_velocity=data.min_velocity
 
 class robot_info_listener(object):
 	""" robot info listener"""
@@ -134,9 +153,9 @@ class robot(object) :
 	
 	def display_robot(self):
 		#velocity vector arrow
-		self.vel_arrow=plt.arrow(self.x, self.y, self.v_x, self.v_y, head_width=1, head_length=1, fc='k', ec='k')
+		self.vel_arrow=plt.arrow(self.x, self.y, self.v_x, self.v_y, head_width=5, head_length=10, fc='k', ec='k')
 		#theta vector arrow
-		self.theta_arrow=plt.arrow(self.x, self.y, 5*math.cos(self.theta), 5*math.sin(self.theta), head_width=1, head_length=1, fc='r', ec='r')
+		self.theta_arrow=plt.arrow(self.x, self.y, 10*math.cos(self.theta),10*math.sin(self.theta), head_width=5, head_length=10, fc='r', ec='r')
 	
 	def clear_robot (self):
 		#removes previous instance of the model on plot

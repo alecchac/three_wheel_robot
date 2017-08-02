@@ -9,8 +9,16 @@ def main():
 	#initialize node
 	rospy.init_node('Controller',anonymous=True)
 	#initialize controller
-	#(self,saturation_linear,saturation_angular,Kc_linear,Ti_linear,Kc_angular,Ti_angular)
-	bobControl=Velocity_Controller_PI(3,1000,.5,15,5,5,.3,.1)
+	#(self,saturation_linear,saturation_angular,Kc_linear,Ti_linear,Kc_angular,Ti_angular,Kd_linear,Kd_angular)
+	max_linear_speed=60 #pixels/sec
+	max_angular_speed=175 #radians/sec
+	Kc_linear=1
+	Ti_linear=3 #Ki=Kc/Ti
+	Kc_angular=150 
+	Ti_angular=3
+	Kd_linear=.1
+	Kd_angular=5
+	bobControl=Velocity_Controller_PI(max_linear_speed,max_angular_speed,Kc_linear,Ti_linear,Kc_angular,Ti_angular,Kd_linear,Kd_angular)
 	#initialize listener classes
 	bobWay=waypoint_listener()
 	bobInfo=robot_info_listener()
@@ -23,17 +31,19 @@ def main():
 	#set tolerance for goal pose 
 	# distance_tolerance=2.1
 	distance_tolerance=50
-	angle_tolerance=3.14
+	angle_tolerance=.2
 	
 	while (not rospy.is_shutdown()) :
 		#checks if waypoint message is not empty
 		if len(bobWay.x)>0:
 			#loops through all waypoints
 			for i in range(len(bobWay.x)):
+				print(bobWay.theta[i])
 				#resets Integrator sums
 				bobControl.reset_Iterms()
 				#checks if robot within the distance and angle tolerances
 				while getDistance(bobWay.x[i],bobWay.y[i],bobInfo.x,bobInfo.y)>distance_tolerance or abs(bobWay.theta[i]-bobInfo.theta)>angle_tolerance:
+				#while abs(bobWay.theta[i]-bobInfo.theta)>angle_tolerance:
 					#updates the current goal pose and the current pose of the robot for the controller class to use
 					bobControl.update_current_positions(bobWay.x[i],bobWay.y[i],bobWay.theta[i],bobInfo.x,bobInfo.y,bobInfo.theta)
 					#calculates the velocities that the robot needs to go (need to specify minimum velocity in the function)
