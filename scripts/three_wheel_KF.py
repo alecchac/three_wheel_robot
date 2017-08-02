@@ -133,7 +133,7 @@ if __name__ == '__main__':
 	#Publisher of this node (Topic, mesage) 
 	pub = rospy.Publisher('Pose_hat', robot_info, queue_size=10)
 	#Subscribe to controller (Topic, message, callback function)
-	# rospy.Subscriber('cmd_vel',robot_info,control_vels.callback)
+	rospy.Subscriber('cmd_vel',robot_info,control_vels.callback)
 	#Subscribe to camera
 	rospy.Subscriber('/ram/amcl_pose',PoseWithCovarianceStamped,measure_pose.callback)
 	#rospy.Subscriber('',PoseWithCovarianceStamped,measure_pose.callback)
@@ -201,7 +201,7 @@ if __name__ == '__main__':
 
 		# zt = [[m_pos_x],       # x position
 		#       [m_pos_y],       # y position
-		#       [m_theta],       # theta angular orientation
+		#       [m_theta]]       # theta angular orientation
 
 		zt = [[measure_pose.x],
 			[measure_pose.y],
@@ -241,10 +241,10 @@ if __name__ == '__main__':
 		#       [omega]]        #angular omega velocity
 
 		# ut = [[control_vels.v_x],
-		# [control_vels.v_y],
-		# [control_vels.omega]]
+		#  [control_vels.v_y],
+		#  [control_vels.omega]]
 
-		ut = [[0],[0],[0]]
+		#ut = [[0],[0],[0]]
 		#print(ut)
 
 		vel_x = control_vels.v_x

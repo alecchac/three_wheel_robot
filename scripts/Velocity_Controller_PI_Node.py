@@ -10,7 +10,7 @@ def main():
 	rospy.init_node('Controller',anonymous=True)
 	#initialize controller
 	#(self,saturation_linear,saturation_angular,Kc_linear,Ti_linear,Kc_angular,Ti_angular)
-	bobControl=Velocity_Controller_PI(10,1,.1,15,.1,50)
+	bobControl=Velocity_Controller_PI(3,1000,.5,15,5,5,.3,.1)
 	#initialize listener classes
 	bobWay=waypoint_listener()
 	bobInfo=robot_info_listener()
@@ -22,8 +22,8 @@ def main():
 	bobPubInfo=robot_info()
 	#set tolerance for goal pose 
 	# distance_tolerance=2.1
-	distance_tolerance=3
-	angle_tolerance=1
+	distance_tolerance=50
+	angle_tolerance=3.14
 	
 	while (not rospy.is_shutdown()) :
 		#checks if waypoint message is not empty
@@ -39,8 +39,8 @@ def main():
 					#calculates the velocities that the robot needs to go (need to specify minimum velocity in the function)
 					vels=bobControl.update_velocities(bobWay.min_velocity[i])
 					#publish velocities to topic cmd_vel
-					bobPubInfo.v_x=0
-					bobPubInfo.v_y=0
+					bobPubInfo.v_x=vels[0]
+					bobPubInfo.v_y=vels[1]
 					bobPubInfo.omega=vels[2]
 					bobPubInfo.max_vel_linear=bobControl.saturation_l	
 					bobPubInfo.max_vel_angular=bobControl.saturation_a		
@@ -105,7 +105,7 @@ class Velocity_Controller_PI(object):
 	Dependencies:time
 	"""
 	
-	def __init__(self,saturation_linear,saturation_angular,Kc_linear,Ti_linear,Kc_angular,Ti_angular):
+	def __init__(self,saturation_linear,saturation_angular,Kc_linear,Ti_linear,Kc_angular,Ti_angular,Kd_linear,Kd_angular):
 		self.saturation_l=float(saturation_linear)
 		self.saturation_a=float(saturation_angular)
 		
@@ -119,6 +119,8 @@ class Velocity_Controller_PI(object):
 		self.Kc_a=float(Kc_angular)
 		self.Ti_linear=float(Ti_linear)
 		self.Ti_angular=float(Ti_angular)
+		self.Kd_linear=float(Kd_linear)
+		self.Kd_angular=float(Kd_angular)
 		
 		self.setX=0.0
 		self.setY=0.0
@@ -131,11 +133,19 @@ class Velocity_Controller_PI(object):
 		self.errorX=0.0
 		self.errorY=0.0
 		self.errorTheta=0.0
+		self.last_error_x=0.0
+		self.last_error_y=0.0
+		self.last_error_theta=0.0
 		
 		#integrator sums
 		self.IX=0.0
 		self.IY=0.0
 		self.ITheta=0.0
+
+		#Derivitive terms
+		self.DX=0.0
+		self.DY=0.0
+		self.Dtheta=0.0
 		
 		self.last_time = time.time()
 		
@@ -164,14 +174,25 @@ class Velocity_Controller_PI(object):
 			self.IY+=self.Ki_l*self.errorY*delta_t
 		if not self.satT:
 			self.ITheta+=self.Ki_a*self.errorTheta*delta_t
-		
+
+		#derivitive contribution
+		self.DX=self.Kd_linear*((self.errorX-self.last_error_x)/delta_t)
+		self.DY=self.Kd_linear*((self.errorY-self.last_error_y)/delta_t)
+		self.Dtheta=self.Kd_angular*((self.errorTheta-self.last_error_theta)/delta_t)
+
+		#set last error
+		self.last_error_x=self.errorX
+		self.last_error_y=self.errorY
+		self.last_error_theta=self.errorTheta
+
+
 		#Set last time
 		self.last_time=time.time()
 	
 		#Add both contributions
-		v_x=v_xP+self.IX
-		v_y=v_yP+self.IY
-		v_theta=v_thetaP+self.ITheta
+		v_x=v_xP+self.IX+self.DX
+		v_y=v_yP+self.IY+self.DY
+		v_theta=v_thetaP+self.ITheta+self.Dtheta
 		
 		#motor saturtaion (sets max speed)
 		mag=math.sqrt((v_x**2)+(v_y**2))

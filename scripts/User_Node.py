@@ -8,10 +8,10 @@ def main():
     pub = rospy.Publisher('goal_pos',waypoints,queue_size=1)
     rospy.init_node('User',anonymous=True)
     rate=rospy.Rate(1)
-    myWaypoints.x=[500,500,30]
-    myWaypoints.y=[300,10,0]
+    myWaypoints.x=[500,500,40]
+    myWaypoints.y=[300,10,40]
     myWaypoints.theta=[0,0,0]
-    myWaypoints.min_velocity=[3,3,3]
+    myWaypoints.min_velocity=[1,1,1]
 
     while not rospy.is_shutdown():
         if len(myWaypoints.x)==len(myWaypoints.y) and len(myWaypoints.x)==len(myWaypoints.theta) and len(myWaypoints.x)==len(myWaypoints.min_velocity):
