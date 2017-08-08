@@ -21,12 +21,14 @@ def main():
 	pub=rospy.Publisher('current_robot_info',robot_info,queue_size=1)
 	rospy.Subscriber('Pose_hat',robot_info,current_pos.callback)
 	rospy.Subscriber('goal_pos',waypoints,bobWay.callback)
+	dots=plt.scatter(bobWay.x,bobWay.y)
 
 	while not rospy.is_shutdown():
 		#take velocities from controller and update velocites in robot class
 		bob.update_velocities(current_pos.v_x,current_pos.v_y,current_pos.omega)
 		#clears the plot
 		bob.clear_robot()
+		dots.remove()
 		#calculates new position from new velocites and current position
 		#bob.update_pos()
 		bob.set_pos(current_pos.x,current_pos.y,current_pos.theta)

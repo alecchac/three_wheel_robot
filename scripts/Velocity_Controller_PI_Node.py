@@ -9,12 +9,11 @@ def main():
 	#initialize node
 	rospy.init_node('Controller',anonymous=True)
 	#initialize controller
-	#(self,saturation_linear,saturation_angular,Kc_linear,Ti_linear,Kc_angular,Ti_angular,Kd_linear,Kd_angular)
-	max_linear_speed=60 #pixels/sec
-	max_angular_speed=175 #radians/sec
+	max_linear_speed=70 #pixels/sec
+	max_angular_speed=1 #radians/sec
 	Kc_linear=1
 	Ti_linear=3 #Ki=Kc/Ti
-	Kc_angular=150 
+	Kc_angular=.1 
 	Ti_angular=3
 	Kd_linear=.1
 	Kd_angular=5
@@ -28,8 +27,7 @@ def main():
 	#init publishers and publish message
 	pub=rospy.Publisher('cmd_vel',robot_info,queue_size=1)
 	bobPubInfo=robot_info()
-	#set tolerance for goal pose 
-	# distance_tolerance=2.1
+	#set tolerances for goal pose 
 	distance_tolerance=50
 	angle_tolerance=.2
 	

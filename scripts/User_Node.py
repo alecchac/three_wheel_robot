@@ -14,6 +14,7 @@ def main():
     myWaypoints.min_velocity=[30,30,30,30,30]
 
     while not rospy.is_shutdown():
+        #ensures the arrays are the same size
         if len(myWaypoints.x)==len(myWaypoints.y) and len(myWaypoints.x)==len(myWaypoints.theta) and len(myWaypoints.x)==len(myWaypoints.min_velocity):
             pub.publish(myWaypoints)
             print(myWaypoints)
