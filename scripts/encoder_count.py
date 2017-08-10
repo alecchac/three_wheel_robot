@@ -9,18 +9,29 @@ import time
 def main():
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
-    wheel_one = encoder(60,1.2,13,14)
+    CPR_motor = 60
+    gear_ratio = 1.2
+    #NEED TO SET CHANNELS
+    wheel_one = encoder(CPR_motor,gear_ratio,13,14)
+    wheel_two = encoder(CPR_motor,gear_ratio,13,14)
+    wheel_three = encoder(CPR_motor,gear_ratio,13,14)
+    wheel_one.setup_pins()
+    wheel_two.setup_pins()
+    wheel_three.setup_pins()
     speed_msg=encoder_speeds()
     pub = rospy.Publisher('encoder_omegas',encoder_speeds,queue_size=1)
     #rate of loop
     rate = rospy.Rate(60)#hz
     while not rospy.is_shutdown():
-        wheel_one.setup_pins()
         speed_msg.s1=wheel_one.get_omega()
-        #pub.publish(speed_msg)
+        speed_msg.s2=wheel_one.get_omega()
+        speed_msg.s3=wheel_one.get_omega()
+        pub.publish(speed_msg)
         rospy.spin()
     #once done cleanup pins
     wheel_one.cleanup()
+    wheel_two.cleanup()
+    wheel_three.cleanup()
 
 class encoder(object):
     """
