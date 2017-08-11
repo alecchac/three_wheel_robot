@@ -10,10 +10,10 @@ def main():
 	rospy.init_node('Controller',anonymous=True)
 	#initialize controller
 	max_linear_speed=70 #pixels/sec
-	max_angular_speed=1 #radians/sec
+	max_angular_speed=1.5 #radians/sec
 	Kc_linear=1
 	Ti_linear=3 #Ki=Kc/Ti
-	Kc_angular=.1 
+	Kc_angular=.2 
 	Ti_angular=3
 	Kd_linear=.1
 	Kd_angular=5
@@ -49,7 +49,7 @@ def main():
 					#publish velocities to topic cmd_vel
 					bobPubInfo.v_x=vels[0]
 					bobPubInfo.v_y=vels[1]
-					bobPubInfo.omega=vels[2]
+					bobPubInfo.omega= vels[2]
 					bobPubInfo.max_vel_linear=bobControl.saturation_l	
 					bobPubInfo.max_vel_angular=bobControl.saturation_a		
 					pub.publish(bobPubInfo)

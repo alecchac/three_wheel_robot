@@ -255,6 +255,9 @@ if __name__ == '__main__':
 		t2 = time.time()
 		dt = t2-t1
 		# main function to compute the Kalman Filter
+		#last_pkg[0]  this is last state
+		#last_pkg[1] this is the prev. covariance 
+		
 		pkg = filter.KF_compute(last_pkg[0], last_pkg[1], ut, zt, Q, dt)
 		#pkg = filter.compute(last_pkg[0],ut,dt)
 		# separate state vector into individual arrays
