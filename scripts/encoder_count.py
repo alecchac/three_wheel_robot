@@ -2,7 +2,7 @@
 
 import rospy
 from three_wheel_robot.msg import encoder_speeds
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 import math
 import time
 

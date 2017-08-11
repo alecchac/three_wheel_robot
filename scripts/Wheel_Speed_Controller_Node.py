@@ -16,9 +16,9 @@ def main():
     #init controller
     wheel_control = Wheel_Speed_Controller(1,.5,100,.1)
     #initializes the  listeners and publishers
-    vels=robot_info_listener()
-    robot_listener=robot_info_listener()
-    encoder_listen=encoder_listener()
+    vels = robot_info_listener()
+    robot_listener = robot_info_listener()
+    encoder_listen = encoder_listener()
     pwm_msg = Speeds()
     #recieve wheel speeds from encoder
     rospy.Subscriber('encoder_omegas',encoder_speeds,encoder_listen.callback)
@@ -36,13 +36,14 @@ def main():
             set_vels = rotate_and_convert_to_wheel_speeds(vels.v_x,vels.v_y,vels.omega,robot_listener.theta)
             wheel_control.update_current_positions(set_vels[0],set_vels[1],set_vels[2],encoder_listen.s1,encoder_listen.s2,encoder_listen.s3)
             wheel_output = wheel_control.update_velocities()
-            pwm_msg.s1 = int(wheel_output[0].round(0))
-            pwm_msg.s2 = int(wheel_output[1].round(0))
-            pwm_msg.s3 = int(wheel_output[2].round(0))
+            pwm_msg.s1 = int(wheel_output[0])
+            pwm_msg.s2 = int(wheel_output[1])
+            pwm_msg.s3 = int(wheel_output[2])
             pub.publish(pwm_msg)
+            print pwm_msg
             rate.sleep()
         elif msgct == 0:
-            rospy.loginfo('waiting for subscriber')
+            rospy.loginfo('Waiting for Subscriber')
             msgct+=1
     rospy.spin()
 
@@ -62,13 +63,13 @@ class encoder_listener(object):
     """ Encoder listener"""
     def __init__(self):
         self.s1 = 0.0
-        self.s2 =0.0
+        self.s2 = 0.0
         self.s3 = 0.0
 
-	def callback(self,data):
-		self.s1 = data.s1
-        self.s2 = data.s2
-        self.s3 = data.s3
+    def callback(self,info):
+        self.s1 = info.s1
+        self.s2 = info.s2
+        self.s3 = info.s3
 
 class robot_info_listener(object):
 	""" robot info listener"""
@@ -149,9 +150,9 @@ class Wheel_Speed_Controller(object):
         self.error3 = self.set3-self.current3
 
         #Proportional Contribution
-        v_1P=self.error1*self.Kc
-        v_2P=self.error2*self.Kc
-        v_3P=self.error3*self.Kc
+        v_1P = self.error1*self.Kc
+        v_2P  =self.error2*self.Kc
+        v_3P = self.error3*self.Kc
 
         #calculate time from last function run
         delta_t=time.time()-self.last_time
