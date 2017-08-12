@@ -4,6 +4,7 @@ import math
 import rospy
 from three_wheel_robot.msg import waypoints
 from three_wheel_robot.msg import robot_info
+from three_wheel_robot.msg import Espeeds
 
 def main():
 	#initialize node
@@ -47,9 +48,9 @@ def main():
 					#calculates the velocities that the robot needs to go (need to specify minimum velocity in the function)
 					vels=bobControl.update_velocities(bobWay.min_velocity[i])
 					#publish velocities to topic cmd_vel
-					bobPubInfo.v_x=vels[0]
-					bobPubInfo.v_y=vels[1]
-					bobPubInfo.omega= vels[2]
+					bobPubInfo.v_x=0#vels[0]
+					bobPubInfo.v_y=0#vels[1]
+					bobPubInfo.omega= -.5 #vels[2]
 					bobPubInfo.max_vel_linear=bobControl.saturation_l	
 					bobPubInfo.max_vel_angular=bobControl.saturation_a		
 					pub.publish(bobPubInfo)
