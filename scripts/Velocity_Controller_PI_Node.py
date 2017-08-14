@@ -13,11 +13,11 @@ def main():
 	max_linear_speed=70 #pixels/sec
 	max_angular_speed=1.5 #radians/sec
 	Kc_linear=1
-	Ti_linear=3 #Ki=Kc/Ti
-	Kc_angular=.2 
-	Ti_angular=3
+	Ti_linear=10 #Ki=Kc/Ti
+	Kc_angular=.5 
+	Ti_angular=10
 	Kd_linear=.1
-	Kd_angular=5
+	Kd_angular=.05
 	bobControl=Velocity_Controller_PI(max_linear_speed,max_angular_speed,Kc_linear,Ti_linear,Kc_angular,Ti_angular,Kd_linear,Kd_angular)
 	#initialize listener classes
 	bobWay=waypoint_listener()
@@ -48,9 +48,9 @@ def main():
 					#calculates the velocities that the robot needs to go (need to specify minimum velocity in the function)
 					vels=bobControl.update_velocities(bobWay.min_velocity[i])
 					#publish velocities to topic cmd_vel
-					bobPubInfo.v_x=0#vels[0]
-					bobPubInfo.v_y=0#vels[1]
-					bobPubInfo.omega= -.5 #vels[2]
+					bobPubInfo.v_x= vels[0]
+					bobPubInfo.v_y= vels[1]
+					bobPubInfo.omega= vels[2]
 					bobPubInfo.max_vel_linear=bobControl.saturation_l	
 					bobPubInfo.max_vel_angular=bobControl.saturation_a		
 					pub.publish(bobPubInfo)

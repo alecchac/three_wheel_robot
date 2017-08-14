@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from three_wheel_robot.msg import Espeeds
+from three_wheel_robot.msg import robot_info
 import RPi.GPIO as GPIO
 import math
 import time
@@ -18,19 +18,16 @@ def main():
     wheel_one.setup_pins()
     wheel_two.setup_pins()
     wheel_three.setup_pins()
-    #speed_msg=encoder_speeds()
-   # pub = rospy.Publisher('encoder_omegas',encoder_speeds,queue_size=1)
+    speed_msg=robot_info()
+    pub = rospy.Publisher('encoder_omegas',robot_info,queue_size=1)
     #rate of loop
-    speed_msg=[0,0,0]
-    #rate = rospy.Rate(60)#hz
+    rate = rospy.Rate(10)#hz
     while not rospy.is_shutdown():
-        speed_msg[0]=wheel_one.get_omega()
-        speed_msg[1]=wheel_two.get_omega()
-        speed_msg[2]=wheel_three.get_omega()
-        print speed_msg
-        time.sleep(.1)
-        #pub.publish(speed_msg)
-    #rospy.spin()
+        speed_msg.v_x=wheel_one.get_omega()
+        speed_msg.v_y=wheel_two.get_omega()
+        speed_msg.omega=wheel_three.get_omega()
+        rate.sleep()
+        pub.publish(speed_msg)
     #once done cleanup pins
     print "shutdown"
     wheel_one.cleanup()
@@ -49,7 +46,7 @@ class encoder(object):
         self.channel_A=gpio_channel_A
         self.channel_B=gpio_channel_B
         self.count=0.0
-        self.last_count = 0
+        self.last_count = 0.0
         self.state_A=0
         self.state_B=0
         self.direction = True #True = CCW, False = CW
@@ -63,14 +60,15 @@ class encoder(object):
 
     def callback_A(self,channel):
         self.state_A=GPIO.input(self.channel_A)
-        if self.state_A != self.state_B and self.state_A == 1:
-            self.direction = False
-        else:
+        self.state_B=GPIO.input(self.channel_B)
+        if self.state_A == self.state_B and self.state_A == 1:
             self.direction = True
+        elif self.state_A != self.state_B and self.state_A == 1:
+            self.direction = False
         self.count += 1
 
     def callback_B(self,channel):
-        self.state_B=GPIO.input(self.channel_B)
+        #self.state_B=GPIO.input(self.channel_B)
         self.count += 1
 
     def get_omega(self):
@@ -84,8 +82,10 @@ class encoder(object):
         self.last_time = time.time()
 
         #determine direction
-        if self.direction == False:
+        if self.direction == False and omega > 1:
             omega *= -1
+
+	print self.direction
 
         return omega
 

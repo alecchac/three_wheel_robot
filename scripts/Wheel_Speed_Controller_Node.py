@@ -7,34 +7,33 @@ from numpy import dot
 from math import *
 from three_wheel_robot.msg import Speeds
 from three_wheel_robot.msg import robot_info
-from three_wheel_robot.msg import encoder_speeds
 
 
 def main():
     msgct=0
     rospy.init_node('Wheel_Speed_Controller',anonymous=True)
     #init controller
-    wheel_control = Wheel_Speed_Controller(1,.5,100,.1)
+    wheel_control = Wheel_Speed_Controller(90,.15,100,.1)
     #initializes the  listeners and publishers
     vels = robot_info_listener()
     robot_listener = robot_info_listener()
-    encoder_listen = encoder_listener()
+    encoder_listen=robot_info_listener()
     pwm_msg = Speeds()
     #recieve wheel speeds from encoder
-    rospy.Subscriber('encoder_omegas',encoder_speeds,encoder_listen.callback)
+    rospy.Subscriber('encoder_omegas',robot_info,encoder_listen.callback)
     #recieve velocities from the controller
     rospy.Subscriber('cmd_vel',robot_info,vels.callback)
     #recive angles from the KF
     rospy.Subscriber('Pose_hat',robot_info,robot_listener.callback)
     pub = rospy.Publisher('speeds',Speeds,queue_size=1)
     #rate of loop
-    rate=rospy.Rate(60)#hz
+    rate=rospy.Rate(10)#hz
 
     while not rospy.is_shutdown():
         #checks if subscriber has recieved a message (max linear velocity must not be zero)
         if vels.max_vel_linear !=0:
             set_vels = rotate_and_convert_to_wheel_speeds(vels.v_x,vels.v_y,vels.omega,robot_listener.theta)
-            wheel_control.update_current_positions(set_vels[0],set_vels[1],set_vels[2],encoder_listen.s1,encoder_listen.s2,encoder_listen.s3)
+            wheel_control.update_current_positions(set_vels[0],set_vels[1],set_vels[2],encoder_listen.v_x,encoder_listen.v_y,encoder_listen.omega)
             wheel_output = wheel_control.update_velocities()
             pwm_msg.s1 = int(wheel_output[0])
             pwm_msg.s2 = int(wheel_output[1])
@@ -48,7 +47,7 @@ def main():
     rospy.spin()
 
 def rotate_and_convert_to_wheel_speeds(v_x,v_y,omega,theta):
-    d = 20
+    d = 2
     #initialize rotation matrix
     rotation = array([[cos(theta), sin(theta), 0],[-sin(theta),cos(theta),0],[0,0,1]])
     #robot frame velocities to robot wheel velocities array
@@ -124,6 +123,10 @@ class Wheel_Speed_Controller(object):
         self.current2=0.0
         self.current3=0.0
 
+        self.v_1 = 0.0
+        self.v_2 = 0.0
+        self.v_3 = 0.0
+
         self.error1=0.0
         self.error2=0.0
         self.error3=0.0
@@ -148,6 +151,8 @@ class Wheel_Speed_Controller(object):
         self.error1 = self.set1-self.current1
         self.error2 = self.set2-self.current2
         self.error3 = self.set3-self.current3
+
+        print "error1: " + str(self.error1)
 
         #Proportional Contribution
         v_1P = self.error1*self.Kc
@@ -184,44 +189,45 @@ class Wheel_Speed_Controller(object):
         #Set last time
         self.last_time=time.time()
 
-        #Add both contributions
-        v_1=v_1P+self.I1+self.D1
-        v_2=v_2P+self.I2+self.D2
-        v_3=v_3P+self.I3+self.D3
+        #Add Three contributions
+        self.v_1 += v_1P+self.I1+self.D1
+        self.v_2 += v_2P+self.I2+self.D2
+        self.v_3 += v_3P+self.I3+self.D3
 
         #motor saturtaion (sets max speed)
         #wheel 1
-        if v_1 > self.saturation:
-            v_1 = self.saturation
+        if self.v_1 > self.saturation:
+            self.v_1 = self.saturation
             self.sat1 = True
-        elif v_1 < -self.saturation:
-            v_1 = -self.saturation
+        elif self.v_1 < -self.saturation:
+            self.v_1 = -self.saturation
             self.sat1 = True
         else:
             self.sat1 = False
 
         #wheel 2
-        if v_2 > self.saturation:
-            v_2 = self.saturation
+        if self.v_2 > self.saturation:
+            self.v_2 = self.saturation
             self.sat2 = True
-        elif v_2 < -self.saturation:
-            v_2 = -self.saturation
+        elif self.v_2 < -self.saturation:
+            self.v_2 = -self.saturation
             self.sat2 = True
         else:
             self.sat2 = False
 
         #wheel 3
-        if v_3 > self.saturation:
-            v_3 = self.saturation
+        if self.v_3 > self.saturation:
+            self.v_3 = self.saturation
             self.sat3 = True
-        elif v_3 < -self.saturation:
-            v_3 = -self.saturation
+        elif self.v_3 < -self.saturation:
+            self.v_3 = -self.saturation
             self.sat3 = True
         else:
             self.sat3 = False
 
         #return calculated velocities
-        return [v_1,v_2,v_3]
+        print 
+        return [self.v_1,self.v_2,self.v_3]
 
 
     def update_current_positions(self,set1,set2,set3,current1,current2,current3):
@@ -231,6 +237,8 @@ class Wheel_Speed_Controller(object):
         self.set1=set1
         self.set2=set2
         self.set3=set3
+        print "set 1: " + str(set1)
+        print "current 1: " + str(current1)
 
     def reset_Iterms(self):
         self.I1=0.0
