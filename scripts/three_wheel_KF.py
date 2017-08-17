@@ -196,22 +196,30 @@ if __name__ == '__main__':
 	# plt.ion()
 
 	while not rospy.is_shutdown():
+		#measure time from last camera measurement
 		no_camera_signal_time = time.time()-measure_pose.last_time
-		theta = measure_pose.theta_z
+
+		#----------------Get World Velocities from the encoder measurements---------------------
+		#get theta from previous kf output
+		theta = last_pkg[0][2][0]
+		print theta
+		#multiply encoder omegas to get linear velocities of wheel (V=omega*r)
 		v0 = encoder_vels.v_x * r
 		v1 = encoder_vels.v_y * r
 		v2 = encoder_vels.omega * r
+		#use inverse equations to get robot frame velocities
 		v = (sqrt(3.0)/3.0)*(v2-v0)
 		vn = ((1.0/3.0)*(v2+v0))-((2.0/3.0)*v1)
 		omega = (1/(3.0*d))*(v0+v1+v2)
 		robot_velocities = np.array([[v],[vn],[omega]])
+		#define rotattion matrix with -theta to convert back to world frame
 		rotation_matrix = np.array([[cos(-theta), sin(-theta), 0],[-sin(-theta),cos(-theta),0],[0,0,1]])
+		#do calculation and publish to Pose_hat
 		world_vels = np.dot(rotation_matrix,robot_velocities)
 		pubInfo.v_x = world_vels[0][0]
 		pubInfo.v_y = world_vels[1][0]
 		pubInfo.omega = world_vels[2][0]
 		
-		#for t in range(0,100):
 
 		#-----------------Get measurments---------------------
 
@@ -228,35 +236,20 @@ if __name__ == '__main__':
 			[measure_pose.y],
 			[measure_pose.theta_z]]
 
-		# zt = [[pos_x[0]+r.uniform(0.1,-0.1)],
-		# 	  [pos_y[0]+r.uniform(0.1,-0.1)],
-		# 	  [theta[0]+r.uniform(0.01,-0.01)]]
-
-		# plt.scatter(t,pos_x[0])
-		# plt.scatter(t,zt[0][0])
-		# plt.pause(0.05)
-		# plt.hold(True)
-		# plt.show()
-
-		# print(pos_x[0])
-		# print(t)
-
-		# print(zt[0])
-		# print(pos_x)
-
-		
-
 			
 		#----------------- Get the sensor Covariance -------------
 		# This is the covariance matrix Q wich comes from the measurments
 
 		# Q = covariance_zt
+		#If camera measurement is not detected, make Q(camera cov) very large
 		if no_camera_signal_time > .5:
 			filter.Q = Q_no_camera
 		else:
 			filter.Q = Q
 
 		#Q = measure_pose.cov #revisar que covarianza es
+
+
 		#----------------- Get the system input -------------
 		# From the topic you get the input apply to system in this case
 		# World frame velocities as shown below
@@ -275,15 +268,15 @@ if __name__ == '__main__':
 		#----------- Beginnign of Kalman Filter -----------
 		t2 = time.time()
 		dt = t2-t1
+
 		# main function to compute the Kalman Filter
 		#last_pkg[0]  this is last state
 		#last_pkg[1] this is the prev. covariance 
 		
-		
 		pkg = filter.KF_compute(last_pkg[0], last_pkg[1], ut, zt, Q, dt)
-		print "K VALUE: " + str(filter.K[0][0])
-		print filter.Q[0][0]
+
 		#pkg = filter.compute(last_pkg[0],ut,dt)
+
 		# separate state vector into individual arrays
 
 		t1 = time.time()
@@ -298,15 +291,6 @@ if __name__ == '__main__':
 		pos_y = mt[1]
 		theta = mt[2]
 
-		# print(pos_x[0])
-
-
-		# n0 = np.random.normal(0,1,1)
-		# n1 = np.random.normal(0,1,1)
-		# n2 = np.random.normal(0,1,1)
-
-
-
 		#----------------End of Kalman Filter -------------------
 
 		#---------------Pubblish the results -------------------
@@ -315,11 +299,7 @@ if __name__ == '__main__':
 		pubInfo.y = pos_y
 		pubInfo.theta=theta
 
-
-		#print(pos_x)
-		#linear and angular velocity
-		# print pubInfo
-
+		#Publish position calculated from Kalman Filter and Velocities from encoder
 		pub.publish(pubInfo)
        
 	print("Exiting ... ")
