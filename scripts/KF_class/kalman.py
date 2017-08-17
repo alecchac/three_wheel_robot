@@ -88,7 +88,7 @@ class KF():
                  [0,dt,0],
                  [0,0,dt]]	
             #covariance matrix from sensors
-            self.Q = Q
+            #self.Q = Q
 
             # if zt == self.z_last:
             #       self.falg1 = 1
@@ -116,7 +116,7 @@ class KF():
             #retun KF results: state vector and Covariance matrix
             return [self.mt, self.St]
 
-            #this fuction is used to test the model
+      #this fuction is used to test the model
       def compute(self, mt_, ut, dt):
             #control matrix
             self.B = [[dt,0,0],

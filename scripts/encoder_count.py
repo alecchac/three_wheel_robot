@@ -21,13 +21,15 @@ def main():
     speed_msg=robot_info()
     pub = rospy.Publisher('encoder_omegas',robot_info,queue_size=1)
     #rate of loop
-    rate = rospy.Rate(10)#hz
+    rate = rospy.Rate(30)#hz
     while not rospy.is_shutdown():
         speed_msg.v_x=wheel_one.get_omega()
         speed_msg.v_y=wheel_two.get_omega()
         speed_msg.omega=wheel_three.get_omega()
-        rate.sleep()
         pub.publish(speed_msg)
+        print speed_msg
+        rate.sleep()
+
     #once done cleanup pins
     print "shutdown"
     wheel_one.cleanup()
@@ -85,7 +87,6 @@ class encoder(object):
         if self.direction == False and omega > 1:
             omega *= -1
 
-	print self.direction
 
         return omega
 

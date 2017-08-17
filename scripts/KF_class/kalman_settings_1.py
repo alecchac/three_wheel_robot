@@ -6,20 +6,20 @@
 #Process covariance
 #si decrementas suaviza pero es mas lenta su respuesta
 
-R1 = 0.000002
-R2 = 0.000003
-R3 = 0.000004
+R1 = 3
+R2 = 3
+R3 = 3
 
 R = [[R1,0,0],
-     [0,R2,0],
-     [0,0,R3]]
+	[0,R2,0],
+	[0,0,R3]]
 
 #Measurment covariance
 #entre mas pequeno le cree mas a la medida
 
-Q1 = 0.0007
-Q2 = 0.0006
-Q3 = 0.0008
+Q1 = 1
+Q2 = 1
+Q3 = 1
 
 
 Q = [[Q1,0,0],

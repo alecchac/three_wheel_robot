@@ -7,13 +7,16 @@ from numpy import dot
 from math import *
 from three_wheel_robot.msg import Speeds
 from three_wheel_robot.msg import robot_info
+from Master_Settings import saturation_omega,Kc,Ti,Kd,d,r
 
 
 def main():
+    #Print Only One Wait Message
     msgct=0
+    #init Node
     rospy.init_node('Wheel_Speed_Controller',anonymous=True)
     #init controller
-    wheel_control = Wheel_Speed_Controller(90,.15,100,.1)
+    wheel_control = Wheel_Speed_Controller(saturation_omega,Kc,Ti,Kd)
     #initializes the  listeners and publishers
     vels = robot_info_listener()
     robot_listener = robot_info_listener()
@@ -27,7 +30,7 @@ def main():
     rospy.Subscriber('Pose_hat',robot_info,robot_listener.callback)
     pub = rospy.Publisher('speeds',Speeds,queue_size=1)
     #rate of loop
-    rate=rospy.Rate(10)#hz
+    rate=rospy.Rate(30)#hz
 
     while not rospy.is_shutdown():
         #checks if subscriber has recieved a message (max linear velocity must not be zero)
@@ -39,7 +42,7 @@ def main():
             pwm_msg.s2 = int(wheel_output[1])
             pwm_msg.s3 = int(wheel_output[2])
             pub.publish(pwm_msg)
-            print pwm_msg
+            #print pwm_msg
             rate.sleep()
         elif msgct == 0:
             rospy.loginfo('Waiting for Subscriber')
@@ -47,7 +50,6 @@ def main():
     rospy.spin()
 
 def rotate_and_convert_to_wheel_speeds(v_x,v_y,omega,theta):
-    d = 2
     #initialize rotation matrix
     rotation = array([[cos(theta), sin(theta), 0],[-sin(theta),cos(theta),0],[0,0,1]])
     #robot frame velocities to robot wheel velocities array
@@ -55,7 +57,8 @@ def rotate_and_convert_to_wheel_speeds(v_x,v_y,omega,theta):
     #do the transformations using matrix multilplication (numpy)
     world_velocities = array([[v_x],[v_y],[omega]])
     robot_velocities = dot(rotation,world_velocities)
-    wheel_velocities = dot(wheel,robot_velocities)
+    wheel_velocities = dot(wheel,robot_velocities) #in Pixels/sec
+    wheel_velocities = wheel_velocities / r #Omega (V=r*omega) ===> omega = V/r
     return wheel_velocities
 
 class encoder_listener(object):
@@ -226,7 +229,6 @@ class Wheel_Speed_Controller(object):
             self.sat3 = False
 
         #return calculated velocities
-        print 
         return [self.v_1,self.v_2,self.v_3]
 
 

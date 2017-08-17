@@ -19,33 +19,34 @@ from three_wheel_robot.msg import robot_info
 from KF_class.kalman import KF
 from KF_class.Three_wheel_robot_system_1 import A,B,C,F
 from KF_class.kalman_settings_1 import R,Q,K
+from Master_Settings import d,r,SF
 
 
 
 
 
 #listener class (comes from controller node)
-class cmd_vel_listener(object):
-
-    
+class robot_info_listener(object):
+	""" robot info listener"""
 	def __init__(self):
-
 		self.x=0.0
 		self.y=0.0
 		self.theta=0.0
 		self.v_x=0.0
 		self.v_y=0.0
 		self.omega=0.0
-		
+		self.max_vel_linear=0.0
+		self.max_vel_angular=0.0
 
 	def callback(self,data):
-
-		self.x = data.x
-		self.y = data.y
-		self.theta = data.theta
-		self.v_x = data.v_x
-		self.v_y = data.v_y
-		self.omega = data.omega
+		self.x=data.x
+		self.y=data.y
+		self.theta=data.theta
+		self.v_x=data.v_x
+		self.v_y=data.v_y
+		self.omega=data.omega
+		self.max_vel_linear=data.max_vel_linear
+		self.max_vel_angular=data.max_vel_angular
 
 
 #listener class (comes from camera node)
@@ -55,7 +56,7 @@ class camera_listener(object):
 
 	def __init__(self):
 
-		
+		self.last_time = time.time()
         #world frame position
 		self.x = 0.0
 		self.y = 0.0
@@ -80,7 +81,7 @@ class camera_listener(object):
 
 	def callback(self,data):
 
-		
+		self.last_time = time.time()
 
         #free space position 
 		self.x = data.pose.pose.position.x
@@ -126,14 +127,15 @@ if __name__ == '__main__':
 	pubInfo = robot_info()
 
 	#create object from listener classes
-	control_vels = cmd_vel_listener()
+	control_vels = robot_info_listener()
 	measure_pose = camera_listener()
+	encoder_vels = robot_info_listener()
 
 	#init publisher and subscribers
 	#Publisher of this node (Topic, mesage) 
 	pub = rospy.Publisher('Pose_hat', robot_info, queue_size=10)
-	#Subscribe to controller (Topic, message, callback function)
-	rospy.Subscriber('cmd_vel',robot_info,control_vels.callback)
+	#Subscribe to Encoder
+	rospy.Subscriber('encoder_omegas',robot_info,encoder_vels.callback)
 	#Subscribe to camera
 	rospy.Subscriber('/ram/amcl_pose',PoseWithCovarianceStamped,measure_pose.callback)
 	#rospy.Subscriber('',PoseWithCovarianceStamped,measure_pose.callback)
@@ -172,6 +174,11 @@ if __name__ == '__main__':
 		[0],
 		[0]]
 
+	#initialize Q when camera is not availible
+	Q_no_camera = [[10**15,0,0],
+		[0,10**15,0],
+		[0,0,10**15]]
+
     # dt = 0.00006
    	t1 = time.time()
 	t2 = time.time()
@@ -189,7 +196,21 @@ if __name__ == '__main__':
 	# plt.ion()
 
 	while not rospy.is_shutdown():
-		t=t+1
+		no_camera_signal_time = time.time()-measure_pose.last_time
+		theta = measure_pose.theta_z
+		v0 = encoder_vels.v_x * r
+		v1 = encoder_vels.v_y * r
+		v2 = encoder_vels.omega * r
+		v = (sqrt(3.0)/3.0)*(v2-v0)
+		vn = ((1.0/3.0)*(v2+v0))-((2.0/3.0)*v1)
+		omega = (1/(3.0*d))*(v0+v1+v2)
+		robot_velocities = np.array([[v],[vn],[omega]])
+		rotation_matrix = np.array([[cos(-theta), sin(-theta), 0],[-sin(-theta),cos(-theta),0],[0,0,1]])
+		world_vels = np.dot(rotation_matrix,robot_velocities)
+		pubInfo.v_x = world_vels[0][0]
+		pubInfo.v_y = world_vels[1][0]
+		pubInfo.omega = world_vels[2][0]
+		
 		#for t in range(0,100):
 
 		#-----------------Get measurments---------------------
@@ -230,6 +251,10 @@ if __name__ == '__main__':
 		# This is the covariance matrix Q wich comes from the measurments
 
 		# Q = covariance_zt
+		if no_camera_signal_time > .5:
+			filter.Q = Q_no_camera
+		else:
+			filter.Q = Q
 
 		#Q = measure_pose.cov #revisar que covarianza es
 		#----------------- Get the system input -------------
@@ -240,16 +265,12 @@ if __name__ == '__main__':
 		#       [Vy],           #linear y velocity
 		#       [omega]]        #angular omega velocity
 
-		# ut = [[control_vels.v_x],
-		#  [control_vels.v_y],
-		#  [control_vels.omega]]
+		ut = [[world_vels[0][0]],
+			[world_vels[1][0]],
+			[world_vels[2]][0]]
 
 		#ut = [[0],[0],[0]]
 		#print(ut)
-
-		vel_x = control_vels.v_x
-		vel_y = control_vels.v_y
-		omega = control_vels.omega
 
 		#----------- Beginnign of Kalman Filter -----------
 		t2 = time.time()
@@ -258,7 +279,10 @@ if __name__ == '__main__':
 		#last_pkg[0]  this is last state
 		#last_pkg[1] this is the prev. covariance 
 		
+		
 		pkg = filter.KF_compute(last_pkg[0], last_pkg[1], ut, zt, Q, dt)
+		print "K VALUE: " + str(filter.K[0][0])
+		print filter.Q[0][0]
 		#pkg = filter.compute(last_pkg[0],ut,dt)
 		# separate state vector into individual arrays
 
@@ -294,9 +318,6 @@ if __name__ == '__main__':
 
 		#print(pos_x)
 		#linear and angular velocity
-		pubInfo.v_x = vel_x
-		pubInfo.v_y = vel_y
-		pubInfo.omega = omega
 		# print pubInfo
 
 		pub.publish(pubInfo)

@@ -4,20 +4,12 @@ import math
 import rospy
 from three_wheel_robot.msg import waypoints
 from three_wheel_robot.msg import robot_info
-from three_wheel_robot.msg import Espeeds
+from Master_Settings import max_linear_speed,max_angular_speed,Kc_linear,Ti_linear,Kc_angular,Ti_angular,Kd_linear,Kd_angular,distance_tolerance,angle_tolerance,SF
 
 def main():
 	#initialize node
 	rospy.init_node('Controller',anonymous=True)
 	#initialize controller
-	max_linear_speed=70 #pixels/sec
-	max_angular_speed=1.5 #radians/sec
-	Kc_linear=1
-	Ti_linear=10 #Ki=Kc/Ti
-	Kc_angular=.5 
-	Ti_angular=10
-	Kd_linear=.1
-	Kd_angular=.05
 	bobControl=Velocity_Controller_PI(max_linear_speed,max_angular_speed,Kc_linear,Ti_linear,Kc_angular,Ti_angular,Kd_linear,Kd_angular)
 	#initialize listener classes
 	bobWay=waypoint_listener()
@@ -28,10 +20,8 @@ def main():
 	#init publishers and publish message
 	pub=rospy.Publisher('cmd_vel',robot_info,queue_size=1)
 	bobPubInfo=robot_info()
-	#set tolerances for goal pose 
-	distance_tolerance=50
-	angle_tolerance=.2
-	
+
+
 	while (not rospy.is_shutdown()) :
 		#checks if waypoint message is not empty
 		if len(bobWay.x)>0:
@@ -48,8 +38,8 @@ def main():
 					#calculates the velocities that the robot needs to go (need to specify minimum velocity in the function)
 					vels=bobControl.update_velocities(bobWay.min_velocity[i])
 					#publish velocities to topic cmd_vel
-					bobPubInfo.v_x= vels[0]
-					bobPubInfo.v_y= vels[1]
+					bobPubInfo.v_x=vels[0]
+					bobPubInfo.v_y=vels[1]
 					bobPubInfo.omega= vels[2]
 					bobPubInfo.max_vel_linear=bobControl.saturation_l	
 					bobPubInfo.max_vel_angular=bobControl.saturation_a		
@@ -198,9 +188,9 @@ class Velocity_Controller_PI(object):
 		#Set last time
 		self.last_time=time.time()
 	
-		#Add both contributions
-		v_x=v_xP+self.IX+self.DX
-		v_y=v_yP+self.IY+self.DY
+		#Add both contributions and multiply by SF
+		v_x=(v_xP+self.IX+self.DX)*SF
+		v_y=(v_yP+self.IY+self.DY)*SF
 		v_theta=v_thetaP+self.ITheta+self.Dtheta
 		
 		#motor saturtaion (sets max speed)
