@@ -5,16 +5,16 @@
 SF = 37.0 / 0.15
 
 #---------Velocity Controller------------
-max_linear_speed= .2 * SF #pixels/sec
+max_linear_speed= .3 * SF #pixels/sec
 max_angular_speed = 3 #radians/sec
-Kc_linear = .002
-Ti_linear = 10 #Ki=Kc/Ti
+Kc_linear = .003
+Ti_linear = 3 #Ki=Kc/Ti
 Kc_angular = 1.5 
-Ti_angular = 10
+Ti_angular = 3
 Kd_linear = 0
 Kd_angular = 0
-distance_tolerance = 50 #Pixels
-angle_tolerance = 0.3 #Radians
+distance_tolerance = 20 #Pixels
+angle_tolerance = 0.1 #Radians
 
 
 #---------Wheel Speed Controller----------

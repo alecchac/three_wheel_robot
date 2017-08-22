@@ -2,6 +2,7 @@
 
 import rospy
 from three_wheel_robot.msg import robot_info
+from three_wheel_robot.msg import Espeeds
 import RPi.GPIO as GPIO
 import math
 import time
@@ -26,17 +27,17 @@ def main():
     wheel_three.setup_pins()
     #create message used to send data 
     #TODO: replace with its own message ----- PROBLEM ------- cannot install new custom message on pi
-    speed_msg=robot_info()
+    speed_msg=Espeeds()
     #init publisher 
-    pub = rospy.Publisher('encoder_omegas',robot_info,queue_size=1)
+    pub = rospy.Publisher('encoder_omegas',Espeeds,queue_size=1)
     #rate of loop
     rate = rospy.Rate(30)#hz
 
     while not rospy.is_shutdown():
         #continuously get encoder omegas (rad/s)
-        speed_msg.v_x=wheel_one.get_omega()
-        speed_msg.v_y=wheel_two.get_omega()
-        speed_msg.omega=wheel_three.get_omega()
+        speed_msg.e_s1=wheel_one.get_omega()
+        speed_msg.e_s2=wheel_two.get_omega()
+        speed_msg.e_s3=wheel_three.get_omega()
         #publish to topic
         pub.publish(speed_msg)
         print speed_msg

@@ -13,6 +13,7 @@ import random as r
 
 #custom messages
 from three_wheel_robot.msg import robot_info
+from three_wheel_robot.msg import Espeeds
 
 
 #custom class for Kalman Filter
@@ -22,7 +23,17 @@ from KF_class.kalman_settings_1 import R,Q,K
 from Master_Settings import d,r,SF
 
 
+class encoder_listener(object):
+    """ Encoder listener"""
+    def __init__(self):
+        self.e_s1 = 0.0
+        self.e_s2 = 0.0
+        self.e_s3 = 0.0
 
+    def callback(self,info):
+        self.e_s1 = info.e_s1
+        self.e_s2 = info.e_s2
+        self.e_s3 = info.e_s3
 
 
 #listener class (comes from controller node)
@@ -129,13 +140,13 @@ if __name__ == '__main__':
 	#create object from listener classes
 	control_vels = robot_info_listener()
 	measure_pose = camera_listener()
-	encoder_vels = robot_info_listener()
+	encoder_vels = encoder_listener()
 
 	#init publisher and subscribers
 	#Publisher of this node (Topic, mesage) 
 	pub = rospy.Publisher('Pose_hat', robot_info, queue_size=10)
 	#Subscribe to Encoder
-	rospy.Subscriber('encoder_omegas',robot_info,encoder_vels.callback)
+	rospy.Subscriber('encoder_omegas',Espeeds,encoder_vels.callback)
 	#Subscribe to camera
 	rospy.Subscriber('/ram/amcl_pose',PoseWithCovarianceStamped,measure_pose.callback)
 	#rospy.Subscriber('',PoseWithCovarianceStamped,measure_pose.callback)
@@ -204,9 +215,9 @@ if __name__ == '__main__':
 		theta = last_pkg[0][2][0]
 		print theta
 		#multiply encoder omegas to get linear velocities of wheel (V=omega*r)
-		v0 = encoder_vels.v_x * r
-		v1 = encoder_vels.v_y * r
-		v2 = encoder_vels.omega * r
+		v0 = encoder_vels.e_s1 * r
+		v1 = encoder_vels.e_s2 * r
+		v2 = encoder_vels.e_s3 * r
 		#use inverse equations to get robot frame velocities
 		v = (sqrt(3.0)/3.0)*(v2-v0)
 		vn = ((1.0/3.0)*(v2+v0))-((2.0/3.0)*v1)

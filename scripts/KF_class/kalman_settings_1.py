@@ -6,9 +6,9 @@
 #Process covariance
 #si decrementas suaviza pero es mas lenta su respuesta
 
-R1 = 3
-R2 = 3
-R3 = 3
+R1 = 5
+R2 = 5
+R3 = 5
 
 R = [[R1,0,0],
 	[0,R2,0],

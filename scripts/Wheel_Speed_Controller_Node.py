@@ -6,6 +6,7 @@ from numpy import array
 from numpy import dot
 from math import *
 from three_wheel_robot.msg import Speeds
+from three_wheel_robot.msg import Espeeds
 from three_wheel_robot.msg import robot_info
 from Master_Settings import saturation_omega,Kc,Ti,Kd,d,r
 
@@ -20,10 +21,10 @@ def main():
     #initializes the  listeners and publishers
     vels = robot_info_listener()
     robot_listener = robot_info_listener()
-    encoder_listen=robot_info_listener()
+    encoder_listen=encoder_listener()
     pwm_msg = Speeds()
     #recieve wheel speeds from encoder
-    rospy.Subscriber('encoder_omegas',robot_info,encoder_listen.callback)
+    rospy.Subscriber('encoder_omegas',Espeeds,encoder_listen.callback)
     #recieve velocities from the controller
     rospy.Subscriber('cmd_vel',robot_info,vels.callback)
     #recive angles from the KF
@@ -36,7 +37,7 @@ def main():
         #checks if subscriber has recieved a message (max linear velocity must not be zero)
         if vels.max_vel_linear !=0:
             set_vels = rotate_and_convert_to_wheel_speeds(vels.v_x,vels.v_y,vels.omega,robot_listener.theta)
-            wheel_control.update_current_positions(set_vels[0],set_vels[1],set_vels[2],encoder_listen.v_x,encoder_listen.v_y,encoder_listen.omega)
+            wheel_control.update_current_positions(set_vels[0],set_vels[1],set_vels[2],encoder_listen.e_s1,encoder_listen.e_s2,encoder_listen.e_s3)
             wheel_output = wheel_control.update_velocities()
             pwm_msg.s1 = int(wheel_output[0])
             pwm_msg.s2 = int(wheel_output[1])
@@ -64,14 +65,14 @@ def rotate_and_convert_to_wheel_speeds(v_x,v_y,omega,theta):
 class encoder_listener(object):
     """ Encoder listener"""
     def __init__(self):
-        self.s1 = 0.0
-        self.s2 = 0.0
-        self.s3 = 0.0
+        self.e_s1 = 0.0
+        self.e_s2 = 0.0
+        self.e_s3 = 0.0
 
     def callback(self,info):
-        self.s1 = info.s1
-        self.s2 = info.s2
-        self.s3 = info.s3
+        self.e_s1 = info.e_s1
+        self.e_s2 = info.e_s2
+        self.e_s3 = info.e_s3
 
 class robot_info_listener(object):
 	""" robot info listener"""
