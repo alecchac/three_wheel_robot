@@ -14,6 +14,7 @@ from Master_Settings import saturation_omega,Kc,Ti,Kd,d,r
 def main():
     #Print Only One Wait Message
     msgct=0
+    #Checks if recived Message
     #init Node
     rospy.init_node('Wheel_Speed_Controller',anonymous=True)
     #init controller
@@ -34,8 +35,8 @@ def main():
     rate=rospy.Rate(30)#hz
 
     while not rospy.is_shutdown():
-        #checks if subscriber has recieved a message (max linear velocity must not be zero)
-        if vels.max_vel_linear !=0:
+        #checks if subscriber has recieved a message 
+        if encoder_listen.sub_message and robot_listener.sub_message:
             set_vels = rotate_and_convert_to_wheel_speeds(vels.v_x,vels.v_y,vels.omega,robot_listener.theta)
             wheel_control.update_current_positions(set_vels[0],set_vels[1],set_vels[2],encoder_listen.e_s1,encoder_listen.e_s2,encoder_listen.e_s3)
             wheel_output = wheel_control.update_velocities()
@@ -68,33 +69,33 @@ class encoder_listener(object):
         self.e_s1 = 0.0
         self.e_s2 = 0.0
         self.e_s3 = 0.0
+        self.sub_message = False
 
     def callback(self,info):
         self.e_s1 = info.e_s1
         self.e_s2 = info.e_s2
         self.e_s3 = info.e_s3
+        self.sub_message = True
 
 class robot_info_listener(object):
-	""" robot info listener"""
-	def __init__(self):
-		self.x=0.0
-		self.y=0.0
-		self.theta=0.0
-		self.v_x=0.0
-		self.v_y=0.0
-		self.omega=0.0
-		self.max_vel_linear=0.0
-		self.max_vel_angular=0.0
+    """ robot info listener"""
+    def __init__(self):
+        self.x=0.0
+        self.y=0.0
+        self.theta=0.0
+        self.v_x=0.0
+        self.v_y=0.0
+        self.omega=0.0
+        self.sub_message = False
 
-	def callback(self,data):
-		self.x=data.x
-		self.y=data.y
-		self.theta=data.theta
-		self.v_x=data.v_x
-		self.v_y=data.v_y
-		self.omega=data.omega
-		self.max_vel_linear=data.max_vel_linear
-		self.max_vel_angular=data.max_vel_angular
+    def callback(self,data):
+        self.x=data.x
+        self.y=data.y
+        self.theta=data.theta
+        self.v_x=data.v_x
+        self.v_y=data.v_y
+        self.omega=data.omega
+        self.sub_message = True
 
 class Wheel_Speed_Controller(object):
     """PI Controller

@@ -38,11 +38,9 @@ def main():
 					#calculates the velocities that the robot needs to go (need to specify minimum velocity in the function)
 					vels=bobControl.update_velocities(bobWay.min_velocity[i])
 					#publish velocities to topic cmd_vel
-					bobPubInfo.v_x=vels[0]
-					bobPubInfo.v_y=vels[1]
-					bobPubInfo.omega= vels[2]
-					bobPubInfo.max_vel_linear=bobControl.saturation_l	
-					bobPubInfo.max_vel_angular=bobControl.saturation_a		
+					bobPubInfo.v_x = vels[0]
+					bobPubInfo.v_y = vels[1]
+					bobPubInfo.omega = 0#vels[2]	
 					pub.publish(bobPubInfo)
 			#once done set velocities to zero and publish velocities
 			bobPubInfo.v_x=0

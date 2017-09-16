@@ -8,9 +8,9 @@ def main():
     pub = rospy.Publisher('goal_pos',waypoints,queue_size=1)
     rospy.init_node('User',anonymous=True)
     rate=rospy.Rate(1)
-    myWaypoints.x=[500,300,200,300,100]
-    myWaypoints.y=[300,60,60,150,300]
-    myWaypoints.theta=[-2,2,-2,0,1.57]
+    myWaypoints.x=[20,20,20,20,20]
+    myWaypoints.y=[-10,10,-10,10,-10]
+    myWaypoints.theta=[0,0,0,0,0]
     myWaypoints.min_velocity=[3,3,3,3,1] # Pixels Per Second
 
     while not rospy.is_shutdown():

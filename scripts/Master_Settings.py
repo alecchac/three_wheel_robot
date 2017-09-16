@@ -2,7 +2,9 @@
 
 #---------Map Scaling Factor
 #     SF = Pixels:Meters
-SF = 37.0 / 0.15
+#SF = 37.0 / 0.15
+#-----SF = inches:Meters
+SF = 39.37
 
 #---------Velocity Controller------------
 max_linear_speed= .3 * SF #pixels/sec
@@ -13,8 +15,8 @@ Kc_angular = 1.5
 Ti_angular = 3
 Kd_linear = 0
 Kd_angular = 0
-distance_tolerance = 20 #Pixels
-angle_tolerance = 0.1 #Radians
+distance_tolerance = 5 #inches
+angle_tolerance = 4 #Radians
 
 
 #---------Wheel Speed Controller----------
@@ -24,6 +26,8 @@ Ti = 1000
 Kd = .15
 
 #---------Robot Definitions---------------
+#distance from center to wheel
 d = 0.09 * SF
+#radius of wheel
 r = 0.05 * SF
 

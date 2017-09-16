@@ -9,12 +9,11 @@ from std_msgs.msg import UInt8, String
 from geometry_msgs.msg import Twist, Vector3, PoseWithCovarianceStamped
 import time
 import tf
-import random as r
 
 #custom messages
 from three_wheel_robot.msg import robot_info
 from three_wheel_robot.msg import Espeeds
-
+from aruco_node.msg import measurement
 
 #custom class for Kalman Filter
 from KF_class.kalman import KF
@@ -22,6 +21,26 @@ from KF_class.Three_wheel_robot_system_1 import A,B,C,F
 from KF_class.kalman_settings_1 import R,Q,K
 from Master_Settings import d,r,SF
 
+class measurment_listener(object):
+	""" measure listener"""
+	def __init__(self):
+		self.last_time = time.time()
+		self.x = 0
+		self.y = 0
+		self.theta = 0
+		self.cov_x = 0
+		self.cov_y = 0
+		self.cov_theta = 0
+		self.isValid = False
+	def callback(self,info):
+		self.last_time = time.time()
+		self.x = info.x
+		self.y = info.y
+		self.theta = info.theta
+		self.cov_x = info.cov_x
+		self.cov_y = info.cov_y
+		self.cov_theta = info.cov_theta
+		self.isValid = info.isValid
 
 class encoder_listener(object):
     """ Encoder listener"""
@@ -46,8 +65,6 @@ class robot_info_listener(object):
 		self.v_x=0.0
 		self.v_y=0.0
 		self.omega=0.0
-		self.max_vel_linear=0.0
-		self.max_vel_angular=0.0
 
 	def callback(self,data):
 		self.x=data.x
@@ -56,14 +73,10 @@ class robot_info_listener(object):
 		self.v_x=data.v_x
 		self.v_y=data.v_y
 		self.omega=data.omega
-		self.max_vel_linear=data.max_vel_linear
-		self.max_vel_angular=data.max_vel_angular
 
 
 #listener class (comes from camera node)
 class camera_listener(object):
-
-
 
 	def __init__(self):
 
@@ -139,8 +152,9 @@ if __name__ == '__main__':
 
 	#create object from listener classes
 	control_vels = robot_info_listener()
-	measure_pose = camera_listener()
+	#measure_pose = camera_listener()
 	encoder_vels = encoder_listener()
+	pi_pose = measurment_listener()
 
 	#init publisher and subscribers
 	#Publisher of this node (Topic, mesage) 
@@ -148,7 +162,9 @@ if __name__ == '__main__':
 	#Subscribe to Encoder
 	rospy.Subscriber('encoder_omegas',Espeeds,encoder_vels.callback)
 	#Subscribe to camera
-	rospy.Subscriber('/ram/amcl_pose',PoseWithCovarianceStamped,measure_pose.callback)
+	#rospy.Subscriber('/ram/amcl_pose',PoseWithCovarianceStamped,measure_pose.callback)
+	#PiCameraSub
+	rospy.Subscriber('/aruco/robot_pose',measurement,pi_pose.callback)
 	#rospy.Subscriber('',PoseWithCovarianceStamped,measure_pose.callback)
 
     # ------------------- End of ROS set up --------------------
@@ -208,7 +224,7 @@ if __name__ == '__main__':
 
 	while not rospy.is_shutdown():
 		#measure time from last camera measurement
-		no_camera_signal_time = time.time()-measure_pose.last_time
+		no_camera_signal_time = time.time()-pi_pose.last_time
 
 		#----------------Get World Velocities from the encoder measurements---------------------
 		#get theta from previous kf output
@@ -242,10 +258,14 @@ if __name__ == '__main__':
 		# zt = [[m_pos_x],       # x position
 		#       [m_pos_y],       # y position
 		#       [m_theta]]       # theta angular orientation
-
+		'''
 		zt = [[measure_pose.x],
 			[measure_pose.y],
 			[measure_pose.theta_z]]
+		'''
+		zt = [[pi_pose.x],
+			[pi_pose.y],
+			[pi_pose.theta]]
 
 			
 		#----------------- Get the sensor Covariance -------------
@@ -253,10 +273,10 @@ if __name__ == '__main__':
 
 		# Q = covariance_zt
 		#If camera measurement is not detected, make Q(camera cov) very large
-		if no_camera_signal_time > .5:
-			filter.Q = Q_no_camera
-		else:
+		if pi_pose.isValid:
 			filter.Q = Q
+		else:
+			filter.Q = Q_no_camera
 
 		#Q = measure_pose.cov #revisar que covarianza es
 

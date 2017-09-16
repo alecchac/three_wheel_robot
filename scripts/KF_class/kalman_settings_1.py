@@ -17,9 +17,9 @@ R = [[R1,0,0],
 #Measurment covariance
 #entre mas pequeno le cree mas a la medida
 
-Q1 = 1
-Q2 = 1
-Q3 = 1
+Q1 = 5
+Q2 = 5
+Q3 = 5
 
 
 Q = [[Q1,0,0],

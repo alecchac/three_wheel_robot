@@ -1,0 +1,5 @@
+<launch>
+<node name="encoder_count" pkg="three_wheel_robot" type="encoder_count.py" output="screen"/>
+<node name="pi_pwm" pkg="three_wheel_robot" type="pi_pwm.py" output="screen"/>
+</launch>
+  
