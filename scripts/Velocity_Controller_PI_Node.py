@@ -4,6 +4,7 @@ import math
 import rospy
 from three_wheel_robot.msg import waypoints
 from three_wheel_robot.msg import robot_info
+from aruco_node.msg import measurement
 from Master_Settings import max_linear_speed,max_angular_speed,Kc_linear,Ti_linear,Kc_angular,Ti_angular,Kd_linear,Kd_angular,distance_tolerance,angle_tolerance,SF
 
 def main():
@@ -20,27 +21,29 @@ def main():
 	#init publishers and publish message
 	pub=rospy.Publisher('cmd_vel',robot_info,queue_size=1)
 	bobPubInfo=robot_info()
-
+	pi_pose = measurment_listener()
+	rospy.Subscriber('/aruco/robot_pose',measurement,pi_pose.callback)
 
 	while (not rospy.is_shutdown()) :
 		#checks if waypoint message is not empty
 		if len(bobWay.x)>0:
 			#loops through all waypoints
 			for i in range(len(bobWay.x)):
-				print(bobWay.theta[i])
+				print i
 				#resets Integrator sums
 				bobControl.reset_Iterms()
 				#checks if robot within the distance and angle tolerances
-				while getDistance(bobWay.x[i],bobWay.y[i],bobInfo.x,bobInfo.y)>distance_tolerance or abs(bobWay.theta[i]-bobInfo.theta)>angle_tolerance:
+				while getDistance(bobWay.x[i],bobWay.y[i],bobInfo.x,bobInfo.y)>distance_tolerance or abs(follow_angle-bobInfo.theta)>angle_tolerance:
 				#while abs(bobWay.theta[i]-bobInfo.theta)>angle_tolerance:
+					follow_angle = math.atan2(bobInfo.y,bobInfo.x) + math.pi
 					#updates the current goal pose and the current pose of the robot for the controller class to use
-					bobControl.update_current_positions(bobWay.x[i],bobWay.y[i],bobWay.theta[i],bobInfo.x,bobInfo.y,bobInfo.theta)
+					bobControl.update_current_positions(bobWay.x[i],bobWay.y[i],follow_angle,bobInfo.x,bobInfo.y,bobInfo.theta)
 					#calculates the velocities that the robot needs to go (need to specify minimum velocity in the function)
 					vels=bobControl.update_velocities(bobWay.min_velocity[i])
 					#publish velocities to topic cmd_vel
 					bobPubInfo.v_x = vels[0]
 					bobPubInfo.v_y = vels[1]
-					bobPubInfo.omega = 0#vels[2]	
+					bobPubInfo.omega = vels[2]	
 					pub.publish(bobPubInfo)
 			#once done set velocities to zero and publish velocities
 			bobPubInfo.v_x=0
@@ -53,6 +56,27 @@ def main():
 
 def getDistance(destX,destY,curX,curY):
 	return math.sqrt((destX-curX)**2+(destY-curY)**2)
+
+class measurment_listener(object):
+	""" measure listener"""
+	def __init__(self):
+		self.last_time = time.time()
+		self.x = 0
+		self.y = 0
+		self.theta = 0
+		self.cov_x = 0
+		self.cov_y = 0
+		self.cov_theta = 0
+		self.isValid = False
+	def callback(self,info):
+		self.last_time = time.time()
+		self.x = info.x
+		self.y = info.y
+		self.theta = info.theta
+		self.cov_x = info.cov_x
+		self.cov_y = info.cov_y
+		self.cov_theta = info.cov_theta
+		self.isValid = info.isValid
 
 class waypoint_listener(object):
 	""" waypoint listener"""

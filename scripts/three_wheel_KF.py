@@ -3,7 +3,6 @@
 import numpy as np
 import math
 from math import pow,atan2,sqrt,cos,sin,asin,pi
-import rosbag
 import rospy
 from std_msgs.msg import UInt8, String
 from geometry_msgs.msg import Twist, Vector3, PoseWithCovarianceStamped
