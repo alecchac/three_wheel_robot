@@ -30,6 +30,8 @@ class measurment_listener(object):
 		self.cov_x = 0
 		self.cov_y = 0
 		self.cov_theta = 0
+		self.D2C = 0
+		self.markernum = 0
 		self.isValid = False
 	def callback(self,info):
 		self.last_time = time.time()
@@ -39,6 +41,8 @@ class measurment_listener(object):
 		self.cov_x = info.cov_x
 		self.cov_y = info.cov_y
 		self.cov_theta = info.cov_theta
+		self.D2C = info.D2C
+		self.markernum = info.markernum
 		self.isValid = info.isValid
 
 class encoder_listener(object):

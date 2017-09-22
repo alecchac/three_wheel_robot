@@ -29,21 +29,27 @@ def main():
 		if len(bobWay.x)>0:
 			#loops through all waypoints
 			for i in range(len(bobWay.x)):
+				follow_angle = 0
 				print i
 				#resets Integrator sums
 				bobControl.reset_Iterms()
 				#checks if robot within the distance and angle tolerances
-				while getDistance(bobWay.x[i],bobWay.y[i],bobInfo.x,bobInfo.y)>distance_tolerance or abs(follow_angle-bobInfo.theta)>angle_tolerance:
+				while getDistance(bobWay.x[i],bobWay.y[i],bobInfo.x,bobInfo.y)>distance_tolerance:
 				#while abs(bobWay.theta[i]-bobInfo.theta)>angle_tolerance:
-					follow_angle = math.atan2(bobInfo.y,bobInfo.x) + math.pi
+					#print "Follow Angle: " + str(follow_angle)
+					#print "Actual Angle: " + str(bobInfo.theta)
+					#follow_angle = math.atan2(bobInfo.y,bobInfo.x) + math.pi
 					#updates the current goal pose and the current pose of the robot for the controller class to use
-					bobControl.update_current_positions(bobWay.x[i],bobWay.y[i],follow_angle,bobInfo.x,bobInfo.y,bobInfo.theta)
+					bobControl.update_current_positions(bobWay.x[i],bobWay.y[i],follow_angle,bobInfo.x,bobInfo.y,-pi_pose.D2C)
 					#calculates the velocities that the robot needs to go (need to specify minimum velocity in the function)
 					vels=bobControl.update_velocities(bobWay.min_velocity[i])
 					#publish velocities to topic cmd_vel
 					bobPubInfo.v_x = vels[0]
 					bobPubInfo.v_y = vels[1]
-					bobPubInfo.omega = vels[2]	
+					if pi_pose.isValid:
+						bobPubInfo.omega = vels[2]
+					else:
+						bobPubInfo.omega = 1.5
 					pub.publish(bobPubInfo)
 			#once done set velocities to zero and publish velocities
 			bobPubInfo.v_x=0
@@ -67,6 +73,8 @@ class measurment_listener(object):
 		self.cov_x = 0
 		self.cov_y = 0
 		self.cov_theta = 0
+		self.D2C = 0
+		self.markernum = 0
 		self.isValid = False
 	def callback(self,info):
 		self.last_time = time.time()
@@ -76,6 +84,8 @@ class measurment_listener(object):
 		self.cov_x = info.cov_x
 		self.cov_y = info.cov_y
 		self.cov_theta = info.cov_theta
+		self.D2C = info.D2C
+		self.markernum = info.markernum
 		self.isValid = info.isValid
 
 class waypoint_listener(object):
